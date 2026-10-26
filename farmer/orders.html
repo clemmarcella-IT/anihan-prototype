@@ -6,6 +6,8 @@
   <title>Orders &amp; Deliveries — Farmer Portal — A.N.I.H.A.N.</title>
   <link rel="stylesheet" href="../styles.css">
   <script src="../app.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
   <style>
     .orders-hero{background:linear-gradient(120deg,#1a4d2b,#2e6f40);padding:32px 28px;color:#fff}
     .orders-hero h1{font-size:26px;font-weight:800;margin-bottom:6px}
@@ -28,6 +30,15 @@
     .chat-msg-name{font-size:10px;font-weight:700;opacity:.75;margin-bottom:3px}
     .chat-input-row{display:flex;gap:8px;margin-top:12px}
     .chat-input-row input{flex:1;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;font-size:13px}
+    .btn-pdf{background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;border:none;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:5px;transition:all .2s;margin-top:14px}
+    .btn-pdf:hover{background:linear-gradient(135deg,#b91c1c,#991b1b);transform:translateY(-1px);box-shadow:0 4px 12px rgba(220,38,38,.3)}
+    .table-footer{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-top:1px solid var(--border);background:#fafaf8;flex-wrap:wrap;gap:12px}
+    .pagination-controls{display:flex;align-items:center;gap:6px}
+    .page-btn{border:1px solid var(--border);background:#fff;border-radius:6px;padding:6px 12px;font-size:12px;font-weight:600;color:var(--ink2);cursor:pointer;transition:all .15s}
+    .page-btn:hover:not(:disabled){background:var(--cream);border-color:var(--green);color:var(--green)}
+    .page-btn.active{background:var(--green);color:#fff;border-color:var(--green);font-weight:700}
+    .page-btn:disabled{opacity:.4;cursor:not-allowed}
+    .page-size-select{padding:5px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-weight:600;background:#fff;color:var(--ink)}
   </style>
 </head>
 <body>
@@ -57,6 +68,7 @@
         <button class="tab-hero-btn" data-st="cancelled">Cancelled</button>
         <button class="tab-hero-btn" data-st="Delivery">Delivery Required</button>
         <button class="tab-hero-btn" data-st="Pick-up">Farm Gate Pick-up</button>
+        <button class="btn-pdf" onclick="exportMyOrdersPDF()" title="Export orders to PDF">&#128196; Export PDF</button>
       </div>
     </div>
   </div>
@@ -116,6 +128,8 @@
     var _user;
     var _currTab = 'all';
     var _activeOrderId = null;
+    var _currentPage = 1;
+    var _pageSize = 10;
 
     document.addEventListener('DOMContentLoaded', function(){
       _user = requireAuth(['Farmer']);
@@ -128,6 +142,7 @@
           document.querySelectorAll('#statusTabs .tab-hero-btn').forEach(function(x){ x.classList.remove('active'); });
           b.classList.add('active');
           _currTab = b.getAttribute('data-st');
+          _currentPage = 1;
           renderFarmerOrders();
         });
       });
@@ -149,6 +164,7 @@
 
       document.getElementById('stTotal').textContent = allOrders.length;
       document.getElementById('stActive').textContent = allOrders.filter(function(o){ return o.status === 'active'; }).length;
+      document.getElementById('stCompleted').textContent = allOrders.filter(function(o){ return o.status === 'completed'; }).length;
       var totalSum = allOrders.reduce(function(s,o){
         var n = Number(o.total);
         return s + (o.status !== 'cancelled' && !isNaN(n) && n >= 0 ? n : 0);
@@ -165,78 +181,76 @@
         return;
       }
 
-      c.innerHTML = orders.map(function(o){
-        var labels = getStepLabels(o.fulfillment);
-        var currLabel = o.status === 'cancelled' ? 'Cancelled' : (labels[o.currentStep - 1] || 'Completed');
-        var nextStepNum = o.currentStep + 1;
-        var nextLabel = labels[nextStepNum - 1];
-        var prevStepNum = o.currentStep - 1;
-        var prevLabel = prevStepNum >= 1 ? labels[prevStepNum - 1] : null;
-        var isPickup = o.fulfillment === 'Pick-up';
-        var buyerPhone = o.buyerPhone || '0918-554-3209';
-        var farmerPhone = o.farmerPhone || _user.phone || '0917-889-2101';
+      var totalPages = Math.max(1, Math.ceil(orders.length / _pageSize));
+      _currentPage = Math.min(_currentPage, totalPages);
+      var startIndex = (_currentPage - 1) * _pageSize;
+      var pageItems = orders.slice(startIndex, startIndex + _pageSize);
 
-        var statusBadgeClass = 'status-active';
-        if (o.status === 'completed') statusBadgeClass = 'status-completed';
-        else if (o.status === 'cancelled') statusBadgeClass = 'status-cancelled';
-
-        var canRevert = (o.status !== 'cancelled' && o.currentStep > 1);
-
-        return '<div class="order-card">' +
-          '<div class="order-head">' +
-            '<div style="display:flex;align-items:center;gap:10px">' +
-              '<span class="order-id">ORDER #' + o.id + '</span>' +
-              getFulfillmentBadge(o.fulfillment) +
-              '<span class="status-pill ' + statusBadgeClass + '">' + currLabel + '</span>' +
-            '</div>' +
-            '<div style="font-size:12px;color:var(--muted)">Order Date: ' + o.date + '</div>' +
-          '</div>' +
-
-          '<div class="order-body">' +
-            '<img class="order-thumb" src="' + o.itemPhoto + '" alt="' + o.itemName + '">' +
-            '<div class="order-info">' +
-              '<h3 style="font-size:16px;font-weight:700;margin-bottom:4px">' + o.itemName + '</h3>' +
-              '<div style="font-size:13px;color:var(--ink2)">Quantity to Dispatch: <strong>' + o.qty + '</strong></div>' +
-              '<div style="font-size:12px;color:var(--ink2);margin-top:4px">Buyer: <strong>' + o.buyer + '</strong> &bull; <a href="tel:' + buyerPhone + '" style="color:var(--green);font-weight:600;text-decoration:underline">' + buyerPhone + '</a></div>' +
-              '<div style="font-size:12px;color:var(--muted);margin-top:2px">Farmer (Your Contact): <strong>' + farmerPhone + '</strong></div>' +
-              '<div style="font-size:12px;color:var(--muted);margin-top:2px">' + (isPickup ? 'Buyer Pick-up Note / Vehicle: ' : 'Delivery Destination: ') + '<strong>' + (o.buyerAddress || 'On file') + '</strong></div>' +
-            '</div>' +
-            '<div style="text-align:right;min-width:140px">' +
-              '<small style="font-size:11px;color:var(--muted);display:block">Collect from Buyer</small>' +
-              '<strong style="font-size:22px;color:' + (o.status === 'cancelled' ? 'var(--muted);text-decoration:line-through' : 'var(--green)') + '">P' + o.total.toLocaleString('en-PH') + '</strong>' +
-              '<small style="display:block;font-size:11px;color:var(--muted);margin-top:2px">' + (o.status === 'cancelled' ? 'Order Cancelled' : 'Payment via Cash / COD') + '</small>' +
-            '</div>' +
-          '</div>' +
-
-          '<div class="order-stepper-wrap">' +
-            '<div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px">' +
-              (o.status === 'cancelled' ? 'Order Status: Cancelled' : 'Fulfillment Progress (Current Stage: Step ' + o.currentStep + ' of 5)') +
-            '</div>' +
-            (o.status === 'cancelled' ?
-              '<div style="background:#fdecea;border:1px solid #f5b3aa;padding:12px 16px;border-radius:8px;font-size:13px;color:#c0392b;font-weight:600">The buyer cancelled this order prior to harvest. The reserved inventory has been automatically restored.</div>' :
-              renderOrderStepper(o)) +
-          '</div>' +
-
-          '<div class="order-actions">' +
-            '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">' +
-              '<button class="btn btn-secondary btn-sm" onclick="openChat(\'' + o.id + '\',\'' + o.buyer.replace(/'/g, "\\'") + '\',\'' + o.itemName.replace(/'/g, "\\'") + '\')">' +
-                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>' +
-                ' Chat with Buyer' +
-              '</button>' +
-              (canRevert ?
-                '<button class="btn btn-sm btn-revert" onclick="revertStep(\'' + o.id + '\')" title="Undo advancement if selected by mistake">&larr; Revert to: ' + prevLabel + '</button>' : '') +
-            '</div>' +
-            '<div style="display:flex;align-items:center;gap:8px">' +
+      c.innerHTML = '<div class="panel" style="overflow:hidden">' +
+        '<div class="panel-head" style="justify-content:space-between"><div><h2>Incoming Orders</h2><small style="color:var(--muted)">Your filtered orders</small></div>' +
+        '<div style="display:flex;align-items:center;gap:10px"><label for="pageSizeSelect" style="font-size:12px;color:var(--muted)">Show:</label><select id="pageSizeSelect" class="page-size-select" onchange="changePageSize(this.value)"><option value="5"' + (_pageSize === 5 ? ' selected' : '') + '>5 per page</option><option value="10"' + (_pageSize === 10 ? ' selected' : '') + '>10 per page</option><option value="15"' + (_pageSize === 15 ? ' selected' : '') + '>15 per page</option><option value="20"' + (_pageSize === 20 ? ' selected' : '') + '>20 per page</option></select></div></div>' +
+        '<div class="panel-body" style="padding:0;overflow-x:auto">' +
+        '<table class="data-table"><thead><tr><th>Order / Date</th><th>Product</th><th>Buyer / Contact</th><th>Quantity</th><th>Fulfillment / Address</th><th>Total</th><th>Progress</th><th>Actions</th></tr></thead><tbody>' +
+        pageItems.map(function(o){
+          var labels = getStepLabels(o.fulfillment);
+          var currLabel = o.status === 'cancelled' ? 'Cancelled' : (labels[o.currentStep - 1] || 'Completed');
+          var nextLabel = labels[o.currentStep];
+          var prevLabel = o.currentStep > 1 ? labels[o.currentStep - 2] : null;
+          var isPickup = o.fulfillment === 'Pick-up';
+          var buyerPhone = o.buyerPhone || '0918-554-3209';
+          var statusBadgeClass = o.status === 'completed' ? 'status-completed' : (o.status === 'cancelled' ? 'status-cancelled' : 'status-active');
+          var canRevert = o.status !== 'cancelled' && o.currentStep > 1;
+          return '<tr>' +
+            '<td><strong class="order-id">ORDER #' + o.id + '</strong><small style="display:block;color:var(--muted);font-size:11px;margin-top:4px">' + o.date + '</small></td>' +
+            '<td><div style="display:flex;align-items:center;gap:8px;min-width:150px"><img class="order-thumb" src="' + o.itemPhoto + '" alt="' + o.itemName + '" style="width:44px;height:44px"><strong>' + o.itemName + '</strong></div></td>' +
+            '<td><strong>' + o.buyer + '</strong><a href="tel:' + buyerPhone + '" style="display:block;color:var(--green);font-size:12px">' + buyerPhone + '</a></td>' +
+            '<td>' + o.qty + '</td>' +
+            '<td>' + getFulfillmentBadge(o.fulfillment) + '<small style="display:block;color:var(--muted);font-size:11px;margin-top:4px">' + (isPickup ? 'Pick-up note' : 'Delivery destination') + ': ' + (o.buyerAddress || 'On file') + '</small></td>' +
+            '<td><strong style="color:' + (o.status === 'cancelled' ? 'var(--muted);text-decoration:line-through' : 'var(--green)') + '">P' + o.total.toLocaleString('en-PH') + '</strong></td>' +
+            '<td><span class="status-pill ' + statusBadgeClass + '">' + currLabel + '</span>' +
+              (o.status === 'cancelled' ?
+                '<small style="display:block;color:#c0392b;margin-top:5px">Inventory restored</small>' :
+                '<div style="min-width:280px;margin-top:8px"><small style="display:block;color:var(--muted);margin-bottom:6px">Step ' + o.currentStep + ' of 5</small>' + renderOrderStepper(o) + '</div>') +
+            '</td>' +
+            '<td><div style="display:flex;gap:6px;flex-wrap:wrap;min-width:180px">' +
+              '<button class="btn btn-secondary btn-sm" onclick="openChat(\'' + o.id + '\',\'' + o.buyer.replace(/'/g, "\\'") + '\',\'' + o.itemName.replace(/'/g, "\\'") + '\')">Chat</button>' +
+              (canRevert ? '<button class="btn btn-sm btn-revert" onclick="revertStep(\'' + o.id + '\')" title="Undo advancement">&larr; Revert to: ' + prevLabel + '</button>' : '') +
               (o.status === 'active' && o.currentStep < 5 ?
                 '<button class="btn btn-primary btn-sm" onclick="advanceStep(\'' + o.id + '\')">Advance to: ' + nextLabel + ' &rarr;</button>' :
                 o.status === 'completed' ?
-                '<span style="font-size:12px;font-weight:700;color:var(--green);display:inline-flex;align-items:center;gap:5px">&#10003; Order Successfully Fulfilled</span>' :
-                o.status === 'cancelled' ?
-                '<span style="font-size:12px;font-weight:700;color:#c0392b">Order Cancelled</span>' : '') +
-            '</div>' +
-          '</div>' +
-        '</div>';
-      }).join('');
+                '<span style="font-size:12px;font-weight:700;color:var(--green)">&#10003; Fulfilled</span>' :
+                o.status === 'cancelled' ? '<span style="font-size:12px;font-weight:700;color:#c0392b">Cancelled</span>' : '') +
+            '</div></td>' +
+          '</tr>';
+        }).join('') + '</tbody></table></div>' +
+        '<div class="table-footer"><div id="pageInfoText" style="font-size:12px;color:var(--muted)">Showing ' + (startIndex + 1) + ' to ' + Math.min(startIndex + _pageSize, orders.length) + ' of ' + orders.length + ' orders (Page ' + _currentPage + ' of ' + totalPages + ')</div><div class="pagination-controls" id="paginationControls"></div></div></div>';
+      renderPaginationControls(totalPages);
+    }
+
+    function renderPaginationControls(totalPages) {
+      var c = document.getElementById('paginationControls');
+      if (!c) return;
+      var h = '<button class="page-btn" onclick="goToPage(' + (_currentPage - 1) + ')" ' + (_currentPage === 1 ? 'disabled' : '') + '>&larr; Prev</button>';
+      for (var i = 1; i <= totalPages; i++) {
+        if (totalPages <= 7 || i === 1 || i === totalPages || (i >= _currentPage - 1 && i <= _currentPage + 1)) {
+          h += '<button class="page-btn ' + (i === _currentPage ? 'active' : '') + '" onclick="goToPage(' + i + ')">' + i + '</button>';
+        } else if (i === _currentPage - 2 || i === _currentPage + 2) {
+          h += '<span style="padding:0 4px;color:var(--muted)">…</span>';
+        }
+      }
+      h += '<button class="page-btn" onclick="goToPage(' + (_currentPage + 1) + ')" ' + (_currentPage === totalPages ? 'disabled' : '') + '>Next &rarr;</button>';
+      c.innerHTML = h;
+    }
+
+    function goToPage(page) {
+      _currentPage = page;
+      renderFarmerOrders();
+    }
+
+    function changePageSize(size) {
+      _pageSize = parseInt(size, 10) || 10;
+      _currentPage = 1;
+      renderFarmerOrders();
     }
 
     function advanceStep(orderId) {
@@ -363,6 +377,53 @@
       renderChatMessages();
       var el = document.getElementById('chatMessages');
       el.scrollTop = el.scrollHeight;
+    }
+
+    function exportMyOrdersPDF() {
+      var orders = getFarmerFilteredOrders();
+      if (!orders.length) { showToast('No orders to export.', 'error'); return; }
+
+      var doc = new window.jspdf.jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+      var now = new Date();
+      var dateStr = now.toLocaleDateString('en-PH', { year:'numeric', month:'long', day:'numeric' });
+
+      doc.setFillColor(30, 77, 43);
+      doc.rect(0, 0, 297, 22, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(13);
+      doc.setFont('helvetica', 'bold');
+      doc.text('A.N.I.H.A.N. — My Farm Orders Report', 14, 10);
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'normal');
+      doc.text('Farmer: ' + (_user ? _user.name : '—') + '   |   Generated: ' + dateStr, 14, 16);
+      doc.text('Orders: ' + orders.length, 265, 16);
+
+      doc.autoTable({
+        startY: 26,
+        head: [['Order ID', 'Item', 'Buyer', 'Buyer Phone', 'Qty', 'Total (PHP)', 'Fulfillment', 'Step', 'Status']],
+        body: orders.map(function(o){
+          var status = o.status === 'cancelled' ? 'Cancelled' : (o.status === 'completed' || o.currentStep === 5 ? 'Completed' : 'Active');
+          return [
+            o.id, o.itemName, o.buyer, o.buyerPhone || '—', o.qty,
+            'P' + Number(o.total).toLocaleString('en-PH'),
+            o.fulfillment || '—', o.currentStep + ' / 5',
+            status
+          ];
+        }),
+        headStyles: { fillColor: [30, 77, 43], textColor: 255, fontStyle: 'bold', fontSize: 8 },
+        bodyStyles: { fontSize: 7.5, textColor: [30, 30, 30] },
+        alternateRowStyles: { fillColor: [245, 250, 246] },
+        columnStyles: { 0:{cellWidth:22}, 1:{cellWidth:42}, 2:{cellWidth:30}, 3:{cellWidth:28}, 4:{cellWidth:18}, 5:{cellWidth:22}, 6:{cellWidth:20}, 7:{cellWidth:14}, 8:{cellWidth:20} },
+        margin: { left: 14, right: 14 },
+        didDrawPage: function(d){
+          doc.setFontSize(7); doc.setTextColor(150);
+          doc.text('A.N.I.H.A.N. Agricultural Coordination Platform — Farmer Orders Report', 14, doc.internal.pageSize.height - 6);
+          doc.text('Page ' + d.pageNumber, 280, doc.internal.pageSize.height - 6);
+        }
+      });
+
+      doc.save('ANIHAN_MyOrders_' + now.toISOString().slice(0,10) + '.pdf');
+      showToast('\u2713 Orders PDF exported!', 'success');
     }
   </script>
 </body>

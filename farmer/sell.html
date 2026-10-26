@@ -6,6 +6,8 @@
   <title>Sales &amp; Listings — Farmer Portal — A.N.I.H.A.N.</title>
   <link rel="stylesheet" href="../styles.css">
   <script src="../app.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
   <style>
     .sell-hero{background:linear-gradient(120deg,#1a4d2b,#2e6f40);padding:32px 28px;color:#fff}
     .sell-hero h1{font-size:26px;font-weight:800;margin-bottom:6px}
@@ -24,6 +26,15 @@
     .listing-card-info{flex:1;min-width:200px}
     .listing-card-actions{display:flex;flex-direction:column;gap:8px;min-width:110px}
     .img-preview{width:100%;height:150px;object-fit:cover;border-radius:8px;border:1px solid var(--border);background:#f4f4f4;margin-top:8px}
+    .btn-pdf{background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;border:none;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:5px;transition:all .2s}
+    .btn-pdf:hover{background:linear-gradient(135deg,#b91c1c,#991b1b);transform:translateY(-1px);box-shadow:0 4px 12px rgba(220,38,38,.3)}
+    .table-footer{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-top:1px solid var(--border);background:#fafaf8;flex-wrap:wrap;gap:12px}
+    .pagination-controls{display:flex;align-items:center;gap:6px}
+    .page-btn{border:1px solid var(--border);background:#fff;border-radius:6px;padding:6px 12px;font-size:12px;font-weight:600;color:var(--ink2);cursor:pointer;transition:all .15s}
+    .page-btn:hover:not(:disabled){background:var(--cream);border-color:var(--green);color:var(--green)}
+    .page-btn.active{background:var(--green);color:#fff;border-color:var(--green);font-weight:700}
+    .page-btn:disabled{opacity:.4;cursor:not-allowed}
+    .page-size-select{padding:5px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-weight:600;background:#fff;color:var(--ink)}
   </style>
 </head>
 <body>
@@ -110,6 +121,7 @@
         <button class="filter-tab" data-type="livestock">Livestock (Cattle, Pigs, Goats)</button>
         <button class="filter-tab" data-type="eggs">Eggs &amp; Poultry</button>
       </div>
+      <button class="btn-pdf" onclick="exportListingsPDF()" title="Export listings report to PDF">&#128196; Export PDF</button>
     </div>
 
     <!-- LISTINGS CONTAINER -->
@@ -271,6 +283,8 @@
     var _editingId = null;
     var _selectedType = 'crop';
     var _selectedFulfill = 'Both';
+    var _currentPage = 1;
+    var _pageSize = 10;
 
     var PRESETS = {
       crop: 'https://images.unsplash.com/photo-1546094096-0df4bcaaa337?w=600&q=80',
@@ -290,6 +304,7 @@
           document.querySelectorAll('#typeTabs .filter-tab').forEach(function(x){ x.classList.remove('active'); });
           b.classList.add('active');
           _currType = b.getAttribute('data-type');
+          _currentPage = 1;
           renderFarmerListings();
         });
       });
@@ -324,47 +339,112 @@
         return;
       }
 
-      c.innerHTML = list.map(function(item){
+      var totalPages = Math.max(1, Math.ceil(list.length / _pageSize));
+      _currentPage = Math.min(_currentPage, totalPages);
+      var startIndex = (_currentPage - 1) * _pageSize;
+      var pageItems = list.slice(startIndex, startIndex + _pageSize);
+
+      c.innerHTML = '<div class="panel" style="overflow:hidden">' +
+        '<div class="panel-head" style="justify-content:space-between">' +
+          '<div><h2>My Farm Listings</h2><small style="color:var(--muted)">Showing filtered inventory</small></div>' +
+          '<div style="display:flex;align-items:center;gap:10px"><label for="pageSizeSelect" style="font-size:12px;color:var(--muted)">Show:</label><select id="pageSizeSelect" class="page-size-select" onchange="changePageSize(this.value)"><option value="5"' + (_pageSize === 5 ? ' selected' : '') + '>5 per page</option><option value="10"' + (_pageSize === 10 ? ' selected' : '') + '>10 per page</option><option value="15"' + (_pageSize === 15 ? ' selected' : '') + '>15 per page</option><option value="20"' + (_pageSize === 20 ? ' selected' : '') + '>20 per page</option></select></div>' +
+        '</div>' +
+        '<div class="panel-body" style="padding:0;overflow-x:auto">' +
+        '<table class="data-table">' +
+          '<thead><tr><th>Product</th><th>Type / Category</th><th>Available Stock</th><th>Farmgate Price</th><th>Harvest / Readiness</th><th>Fulfillment</th><th>Status</th><th>Actions</th></tr></thead>' +
+          '<tbody>' + pageItems.map(function(item){
         var pct = Math.round((item.available / item.total) * 100);
-        return '<div class="listing-card">' +
-          '<img class="listing-card-img" src="' + item.photo + '" alt="' + item.name + '">' +
-          '<div class="listing-card-body">' +
-            '<div class="listing-card-info">' +
-              '<div style="display:flex;align-items:center;gap:8px">' +
-                '<h3 style="font-size:16px;font-weight:700">' + item.name + '</h3>' +
-                getCategoryTag(item.type) +
-                (item.status === 'active' ? '<span class="status-pill status-active">Active</span>' : '<span class="status-pill status-suspended">Inactive</span>') +
-              '</div>' +
-              '<div style="font-size:12px;color:var(--muted);margin-top:2px">' + (item.english || '') + ' &bull; Category: ' + item.category + '</div>' +
-              '<div style="display:flex;gap:6px;margin:8px 0;flex-wrap:wrap">' +
-                getFulfillmentBadge(item.fulfillment) +
-                renderStars(item.rating) +
-              '</div>' +
-              '<div style="font-size:12px;color:var(--ink2);margin-top:4px">' +
-                '<strong>' + item.available + ' ' + item.unit + '</strong> available out of <strong>' + item.total + ' ' + item.unit + '</strong>' +
-              '</div>' +
-              '<div style="margin-top:6px;height:5px;background:var(--border);border-radius:3px;overflow:hidden;max-width:260px">' +
-                '<div style="width:' + pct + '%;height:100%;background:var(--green)"></div>' +
-              '</div>' +
-              '<div style="font-size:11px;color:var(--muted);margin-top:6px">' +
-                'Harvest / Readiness: <strong>' + item.harvestDate + '</strong>' +
-              '</div>' +
-            '</div>' +
+        return '<tr>' +
+          '<td><div style="display:flex;align-items:center;gap:10px;min-width:180px">' +
+            '<img src="' + item.photo + '" alt="' + item.name + '" style="width:48px;height:48px;object-fit:cover;border-radius:6px;background:#eee">' +
+            '<div><strong>' + item.name + '</strong><small style="display:block;color:var(--muted);font-size:11px">' + (item.english || '') + '</small></div>' +
+          '</div></td>' +
+          '<td>' + getCategoryTag(item.type) + '<small style="display:block;color:var(--muted);font-size:11px;margin-top:4px">' + item.category + '</small></td>' +
+          '<td><strong>' + item.available + ' ' + item.unit + '</strong><small style="display:block;color:var(--muted);font-size:11px">of ' + item.total + ' ' + item.unit + '</small><div style="margin-top:5px;height:4px;background:var(--border);border-radius:3px;overflow:hidden;width:100px"><div style="width:' + pct + '%;height:100%;background:var(--green)"></div></div></td>' +
+          '<td><strong style="color:var(--green)">P' + item.price.toLocaleString('en-PH') + '</strong><small style="display:block;color:var(--muted);font-size:11px">per ' + item.unit + '</small></td>' +
+          '<td>' + item.harvestDate + '</td>' +
+          '<td>' + getFulfillmentBadge(item.fulfillment) + '<div style="margin-top:4px">' + renderStars(item.rating) + '</div></td>' +
+          '<td><span class="status-pill ' + (item.status === 'active' ? 'status-active' : 'status-suspended') + '">' + (item.status === 'active' ? 'Active' : 'Inactive') + '</span></td>' +
+          '<td><div style="display:flex;gap:5px;flex-wrap:wrap;min-width:190px">' +
+            '<button class="btn btn-sm btn-secondary" onclick="openEditListingModal(' + item.id + ')">Edit</button>' +
+            '<button class="btn btn-sm btn-ghost" onclick="toggleListingStatus(' + item.id + ')">' + (item.status==='active'?'Deactivate':'Activate') + '</button>' +
+            '<button class="btn btn-sm btn-danger" style="padding:4px 8px;font-size:11px" onclick="deleteListing(' + item.id + ')">Delete</button>' +
+          '</div></td>' +
+        '</tr>';
+      }).join('') + '</tbody></table></div>' +
+        '<div class="table-footer"><div id="pageInfoText" style="font-size:12px;color:var(--muted)">Showing ' + (startIndex + 1) + ' to ' + Math.min(startIndex + _pageSize, list.length) + ' of ' + list.length + ' listings (Page ' + _currentPage + ' of ' + totalPages + ')</div><div class="pagination-controls" id="paginationControls"></div></div></div>';
+      renderPaginationControls(totalPages);
+    }
 
-            '<div style="text-align:right;min-width:130px">' +
-              '<small style="color:var(--muted);font-size:11px">Farmgate Price</small>' +
-              '<strong style="font-size:22px;color:var(--green);display:block">P' + item.price.toLocaleString('en-PH') + '</strong>' +
-              '<small style="color:var(--muted);font-size:11px">per ' + item.unit + '</small>' +
-            '</div>' +
+    function renderPaginationControls(totalPages) {
+      var c = document.getElementById('paginationControls');
+      if (!c) return;
+      var h = '<button class="page-btn" onclick="goToPage(' + (_currentPage - 1) + ')" ' + (_currentPage === 1 ? 'disabled' : '') + '>&larr; Prev</button>';
+      for (var i = 1; i <= totalPages; i++) {
+        if (totalPages <= 7 || i === 1 || i === totalPages || (i >= _currentPage - 1 && i <= _currentPage + 1)) {
+          h += '<button class="page-btn ' + (i === _currentPage ? 'active' : '') + '" onclick="goToPage(' + i + ')">' + i + '</button>';
+        } else if (i === _currentPage - 2 || i === _currentPage + 2) {
+          h += '<span style="padding:0 4px;color:var(--muted)">…</span>';
+        }
+      }
+      h += '<button class="page-btn" onclick="goToPage(' + (_currentPage + 1) + ')" ' + (_currentPage === totalPages ? 'disabled' : '') + '>Next &rarr;</button>';
+      c.innerHTML = h;
+    }
 
-            '<div class="listing-card-actions">' +
-              '<button class="btn btn-sm btn-secondary" onclick="openEditListingModal(' + item.id + ')">Edit Listing</button>' +
-              '<button class="btn btn-sm btn-ghost" onclick="toggleListingStatus(' + item.id + ')">' + (item.status==='active'?'Deactivate':'Activate') + '</button>' +
-              '<button class="btn btn-sm btn-danger" style="padding:4px 8px;font-size:11px" onclick="deleteListing(' + item.id + ')">Delete</button>' +
-            '</div>' +
-          '</div>' +
-        '</div>';
-      }).join('');
+    function goToPage(page) {
+      _currentPage = page;
+      renderFarmerListings();
+    }
+
+    function changePageSize(size) {
+      _pageSize = parseInt(size, 10) || 10;
+      _currentPage = 1;
+      renderFarmerListings();
+    }
+
+    function exportListingsPDF() {
+      var listings = getFarmerListings();
+      if (!listings.length) { showToast('No listings to export.', 'error'); return; }
+
+      var doc = new window.jspdf.jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+      var now = new Date();
+      var dateStr = now.toLocaleDateString('en-PH', { year:'numeric', month:'long', day:'numeric' });
+
+      doc.setFillColor(30, 77, 43);
+      doc.rect(0, 0, 297, 22, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(13);
+      doc.setFont('helvetica', 'bold');
+      doc.text('A.N.I.H.A.N. — My Farm Listings Report', 14, 10);
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'normal');
+      doc.text('Farmer: ' + _user.name + '   |   Generated: ' + dateStr, 14, 16);
+      doc.text('Listings: ' + listings.length, 265, 16);
+
+      doc.autoTable({
+        startY: 26,
+        head: [['Product', 'Type', 'Category', 'Available', 'Total', 'Price / Unit (PHP)', 'Harvest / Readiness', 'Fulfillment', 'Status']],
+        body: listings.map(function(item){
+          return [
+            item.name, item.type, item.category, item.available + ' ' + item.unit,
+            item.total + ' ' + item.unit, 'P' + Number(item.price).toLocaleString('en-PH'),
+            item.harvestDate || '—', item.fulfillment || '—',
+            item.status === 'active' ? 'Active' : 'Inactive'
+          ];
+        }),
+        headStyles: { fillColor: [30, 77, 43], textColor: 255, fontStyle: 'bold', fontSize: 8 },
+        bodyStyles: { fontSize: 7.5, textColor: [30, 30, 30] },
+        alternateRowStyles: { fillColor: [245, 250, 246] },
+        margin: { left: 14, right: 14 },
+        didDrawPage: function(d){
+          doc.setFontSize(7); doc.setTextColor(150);
+          doc.text('A.N.I.H.A.N. Agricultural Coordination Platform — Farmer Listings Report', 14, doc.internal.pageSize.height - 6);
+          doc.text('Page ' + d.pageNumber, 280, doc.internal.pageSize.height - 6);
+        }
+      });
+
+      doc.save('ANIHAN_MyListings_' + now.toISOString().slice(0,10) + '.pdf');
+      showToast('\u2713 Listings PDF exported!', 'success');
     }
 
     function selectType(t) {

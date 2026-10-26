@@ -6,6 +6,8 @@
   <title>Assisted Farmer Portal — Barangay Ag Worker — A.N.I.H.A.N.</title>
   <link rel="stylesheet" href="../styles.css">
   <script src="../app.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
   <style>
     .agw-hero{border-radius:16px;padding:32px;color:#fff;background:linear-gradient(135deg,#3d2402,#734606,#9e640d);margin-bottom:24px;position:relative;overflow:hidden;box-shadow:0 8px 24px rgba(61,36,2,.18)}
     .agw-hero::after{content:'';position:absolute;right:-40px;top:-40px;width:240px;height:240px;background:rgba(255,255,255,.07);border-radius:50%}
@@ -16,9 +18,9 @@
     .quick-actions .btn{font-size:13px;padding:10px 20px;background:rgba(255,255,255,.18);color:#fff;border:1px solid rgba(255,255,255,.35);font-weight:600}
     .quick-actions .btn:hover{background:rgba(255,255,255,.28)}
 
-    /* PASSCODE COLUMN EMPHASIS */
-    .passcode-badge{font-family:monospace;font-size:13px;font-weight:800;background:#fef3dc;color:#8a4d00;border:1.5px solid #f6c86a;border-radius:6px;padding:3px 8px;letter-spacing:1.5px;display:inline-flex;align-items:center;gap:5px}
-    .passcode-copy-btn{background:transparent;border:0;cursor:pointer;color:#8a4d00;font-size:11px;padding:2px}
+    /* PDF EXPORT BUTTON */
+    .btn-pdf{background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;border:none;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:5px;transition:all .2s}
+    .btn-pdf:hover{background:linear-gradient(135deg,#b91c1c,#991b1b);transform:translateY(-1px);box-shadow:0 4px 12px rgba(220,38,38,.3)}
 
     /* PAGINATION STYLES */
     .table-footer{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-top:1px solid var(--border);background:#fafaf8;flex-wrap:wrap;gap:12px}
@@ -106,7 +108,7 @@
       </div>
       <div class="search-box">
         <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-        <input type="text" id="searchInput" placeholder="Search my registered farmers by name, phone, passcode...">
+        <input type="text" id="searchInput" placeholder="Search my registered farmers by name, phone, location...">
       </div>
       <button class="btn btn-primary btn-sm" onclick="openAssistedRegisterModal()">+ Register New Farmer</button>
     </div>
@@ -119,6 +121,7 @@
           <small id="recordCount" style="color:var(--muted)">Displaying farmers registered by Barangay Extension Worker</small>
         </div>
         <div style="display:flex;align-items:center;gap:10px">
+          <button class="btn-pdf" onclick="exportFarmersPDF()" title="Export table as PDF report">&#128196; Export PDF</button>
           <label style="font-size:12px;color:var(--muted)">Show:</label>
           <select id="pageSizeSelect" class="page-size-select" onchange="changePageSize(this.value)">
             <option value="5">5 per page</option>
@@ -135,7 +138,6 @@
               <th>Farmer Name &amp; ID</th>
               <th>Barangay / Farmstead Location</th>
               <th>Contact Phone</th>
-              <th style="background:#fef3dc;color:#8a4d00;border-bottom:2px solid #f6c86a">Pass Code / Access PIN</th>
               <th>RSBSA / Low-Tech Note</th>
               <th>LGU Approval Status</th>
               <th style="text-align:center">Listings</th>
@@ -184,14 +186,6 @@
           </div>
 
           <div class="form-row">
-            <div class="form-group">
-              <label>Assigned Pass Code (6-Digit PIN)</label>
-              <div style="display:flex;gap:6px">
-                <input type="text" id="asstPassCode" style="font-family:monospace;font-weight:800;letter-spacing:1px" required>
-                <button type="button" class="btn btn-secondary btn-sm" onclick="generateNewAsstPassCode()">New PIN</button>
-              </div>
-              <small class="form-hint">Used by you to access and sell crops/animals on the farmer's behalf.</small>
-            </div>
             <div class="form-group">
               <label>Initial Approval Status</label>
               <input type="text" value="Pending Approval (Sent to LGU Admin)" disabled style="background:#f9f8f6;color:var(--muted)">
@@ -355,12 +349,6 @@
           '</td>' +
           '<td style="color:var(--ink2);font-size:12px">' + (a.location || 'Guimba, Nueva Ecija') + '</td>' +
           '<td style="font-size:13px">' + (a.phone || '0917-889-2101') + '</td>' +
-          '<td style="background:#fefbf4">' +
-            '<span class="passcode-badge">' +
-              '<span>' + (a.passCode || '492011') + '</span>' +
-              '<button type="button" class="passcode-copy-btn" onclick="navigator.clipboard.writeText(\'' + (a.passCode||'') + '\');showToast(\'Pass Code copied!\',\'success\')" title="Copy Passcode">&#128203;</button>' +
-            '</span>' +
-          '</td>' +
           '<td style="font-size:12px;color:var(--muted);max-width:200px">' + (a.note || 'Assisted grower') + '</td>' +
           '<td>' +
             '<span class="status-pill ' + (isActive ? 'status-active' : isPending ? 'status-pending' : 'status-suspended') + '">' +
@@ -411,14 +399,62 @@
 
     function openAssistedRegisterModal() {
       document.getElementById('assistedForm').reset();
-      generateNewAsstPassCode();
       updateAsstLocPreview();
       openModal('assistedModal');
     }
 
-    function generateNewAsstPassCode() {
-      var code = String(Math.floor(100000 + Math.random() * 900000));
-      document.getElementById('asstPassCode').value = code;
+    function exportFarmersPDF() {
+      var accounts = getAccounts();
+      var myId = _user ? _user.id : 'U003';
+      var farmers = accounts.filter(function(a){ return a.lowTech && (a.registeredBy === myId || a.assistedBy); });
+      if (!farmers.length) { showToast('No farmer records to export.', 'error'); return; }
+
+      var doc = new window.jspdf.jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+      var now = new Date();
+      var dateStr = now.toLocaleDateString('en-PH', { year:'numeric', month:'long', day:'numeric' });
+
+      // Header
+      doc.setFillColor(61, 36, 2);
+      doc.rect(0, 0, 297, 22, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(13);
+      doc.setFont('helvetica', 'bold');
+      doc.text('A.N.I.H.A.N. — Assisted Farmers Registry Report', 14, 10);
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'normal');
+      doc.text('Barangay Extension Worker: ' + (_user ? _user.name : 'Enrique Dizon') + '   |   Generated: ' + dateStr, 14, 16);
+      doc.text('Total Records: ' + farmers.length, 250, 16);
+
+      doc.autoTable({
+        startY: 26,
+        head: [['Farmer Name', 'ID', 'Location', 'Contact Phone', 'Note / RSBSA', 'Status', 'Listings']],
+        body: farmers.map(function(a){
+          var listings = (getListings ? getListings() : []).filter(function(l){ return l.farmerId === a.id; }).length;
+          return [
+            a.name,
+            a.id,
+            a.location || 'Guimba, Nueva Ecija',
+            a.phone || '—',
+            a.note || '—',
+            a.status,
+            listings
+          ];
+        }),
+        headStyles: { fillColor: [61, 36, 2], textColor: 255, fontStyle: 'bold', fontSize: 8 },
+        bodyStyles: { fontSize: 8, textColor: [30, 30, 30] },
+        alternateRowStyles: { fillColor: [254, 251, 244] },
+        columnStyles: { 0:{cellWidth:40}, 1:{cellWidth:18}, 2:{cellWidth:50}, 3:{cellWidth:30}, 4:{cellWidth:80}, 5:{cellWidth:28}, 6:{cellWidth:14,halign:'center'} },
+        margin: { left: 14, right: 14 },
+        didDrawPage: function(d){
+          doc.setFontSize(7);
+          doc.setTextColor(150);
+          doc.text('A.N.I.H.A.N. Agricultural Coordination Platform — Confidential Municipal Registry', 14, doc.internal.pageSize.height - 6);
+          doc.text('Page ' + d.pageNumber, 280, doc.internal.pageSize.height - 6);
+        }
+      });
+
+      doc.save('ANIHAN_AssistFarmers_' + now.toISOString().slice(0,10) + '.pdf');
+      showToast('\u2713 PDF report exported!', 'success');
     }
 
     function updateAsstLocPreview() {
@@ -436,7 +472,6 @@
       e.preventDefault();
       var name = document.getElementById('asstName').value.trim();
       var phone = document.getElementById('asstPhone').value.trim();
-      var passCode = document.getElementById('asstPassCode').value.trim();
       var commodities = document.getElementById('asstCommodities').value.trim();
       var note = document.getElementById('asstNote').value.trim();
 
@@ -458,7 +493,6 @@
         role: 'Farmer',
         phone: phone,
         email: name.toLowerCase().replace(/[^a-z]/g, '') + '@anihan.ph',
-        passCode: passCode,
         location: loc,
         purok: purok,
         barangay: brgy,

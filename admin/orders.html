@@ -6,6 +6,8 @@
   <title>Municipal Distribution Monitor — LGU Admin — A.N.I.H.A.N.</title>
   <link rel="stylesheet" href="../styles.css">
   <script src="../app.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
   <style>
     .orders-hero{background:linear-gradient(135deg,#0c2815,#1b4f2c,#2d7342);padding:32px 28px;color:#fff;box-shadow:0 6px 20px rgba(12,40,21,.15)}
     .orders-hero h1{font-size:28px;font-weight:800;margin-bottom:6px;color:#fff}
@@ -23,6 +25,8 @@
     .page-btn.active{background:var(--green);color:#fff;border-color:var(--green);font-weight:700}
     .page-btn:disabled{opacity:.4;cursor:not-allowed}
     .page-size-select{padding:5px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-weight:600;background:#fff;color:var(--ink)}
+    .btn-pdf{background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;border:none;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:5px;transition:all .2s}
+    .btn-pdf:hover{background:linear-gradient(135deg,#b91c1c,#991b1b);transform:translateY(-1px);box-shadow:0 4px 12px rgba(220,38,38,.3)}
   </style>
 </head>
 <body>
@@ -102,15 +106,6 @@
       <div class="search-box">
         <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
         <input type="text" id="searchInput" placeholder="Search by order ID, farmer, buyer, item...">
-      </div>
-      <div style="display:flex;align-items:center;gap:8px">
-        <label style="font-size:12px;color:var(--muted)">Show:</label>
-        <select id="pageSizeSelect" class="page-size-select" onchange="changePageSize(this.value)">
-          <option value="5">5 per page</option>
-          <option value="10" selected>10 per page</option>
-          <option value="15">15 per page</option>
-          <option value="20">20 per page</option>
-        </select>
       </div>
     </div>
 
@@ -207,48 +202,36 @@
         return;
       }
 
-      c.innerHTML = pageItems.map(function(o){
-        var isPickup = o.fulfillment === 'Pick-up';
-        var stepLabels = getStepLabels(o.fulfillment);
-        var currLbl = stepLabels[o.currentStep - 1] || 'Processing';
-        var isCompleted = o.status === 'completed' || o.currentStep === 5;
+      c.innerHTML = '<div class="panel" style="overflow:hidden">' +
+        '<div class="panel-head" style="justify-content:space-between;gap:12px;flex-wrap:wrap"><div><h2>Municipal Orders</h2><small style="color:var(--muted)">Regional fulfillment records</small></div>' +
+          '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><button class="btn-pdf" onclick="exportOrdersPDF()" title="Export orders to PDF">&#128196; Export PDF</button>' +
+            '<div style="display:flex;align-items:center;gap:8px"><label for="pageSizeSelect" style="font-size:12px;color:var(--muted)">Show:</label>' +
+              '<select id="pageSizeSelect" class="page-size-select" onchange="changePageSize(this.value)"><option value="5"' + (_pageSize === 5 ? ' selected' : '') + '>5 per page</option><option value="10"' + (_pageSize === 10 ? ' selected' : '') + '>10 per page</option><option value="15"' + (_pageSize === 15 ? ' selected' : '') + '>15 per page</option><option value="20"' + (_pageSize === 20 ? ' selected' : '') + '>20 per page</option></select>' +
+            '</div></div></div>' +
+        '<div class="panel-body" style="padding:0;overflow-x:auto">' +
+        '<table class="data-table"><thead><tr><th>Order / Date</th><th>Product</th><th>Farmer / Contact</th><th>Buyer / Contact</th><th>Quantity</th><th>Fulfillment / Address</th><th>Contract Total</th><th>Progress</th></tr></thead><tbody>' +
+        pageItems.map(function(o){
+          var isPickup = o.fulfillment === 'Pick-up';
+          var stepLabels = getStepLabels(o.fulfillment);
+          var currLabel = stepLabels[o.currentStep - 1] || 'Processing';
+          var isCompleted = o.status === 'completed' || o.currentStep === 5;
+          var isCancelled = o.status === 'cancelled';
+          var statusClass = isCancelled ? 'status-cancelled' : (isCompleted ? 'status-completed' : 'status-active');
+          var statusLabel = isCancelled ? 'Cancelled' : (isCompleted ? 'Completed' : currLabel);
 
-        return '<div class="order-card">' +
-          '<div class="order-head">' +
-            '<div style="display:flex;align-items:center;gap:12px">' +
-              '<span class="order-id" style="font-size:13px;font-weight:800;color:var(--green)">' + o.id + '</span>' +
-              getFulfillmentBadge(o.fulfillment) +
-              '<span style="font-size:12px;color:var(--muted)">Ordered: ' + o.date + '</span>' +
-            '</div>' +
-            '<div style="display:flex;align-items:center;gap:10px">' +
-              '<span class="status-pill ' + (isCompleted ? 'status-completed' : 'status-active') + '">' +
-                (isCompleted ? '&#10003; Delivered / Completed' : '&#9679; Step ' + o.currentStep + ' of 5: ' + currLbl) +
-              '</span>' +
-            '</div>' +
-          '</div>' +
-          '<div class="order-body">' +
-            '<img src="' + o.itemPhoto + '" class="order-thumb" alt="' + o.itemName + '">' +
-            '<div style="flex:1;min-width:200px">' +
-              '<strong style="font-size:15px;display:block">' + o.itemName + '</strong>' +
-              '<div style="font-size:12px;color:var(--muted);margin-top:2px">Quantity: <strong>' + o.qty + '</strong></div>' +
-              '<div style="font-size:12px;color:var(--ink2);margin-top:6px;display:flex;gap:16px;flex-wrap:wrap">' +
-                '<span><strong>Farmer:</strong> ' + o.farmer + ' (' + (o.farmerPhone||'N/A') + ')</span>' +
-                '<span><strong>Buyer:</strong> ' + o.buyer + ' (' + (o.buyerPhone||'N/A') + ')</span>' +
-              '</div>' +
-              '<div style="font-size:11px;color:var(--muted);margin-top:4px">' +
-                '<span>' + (isPickup ? 'Pick-up Farm Gate: ' : 'Delivery Destination: ') + (o.buyerAddress || 'Guimba, Nueva Ecija') + '</span>' +
-              '</div>' +
-            '</div>' +
-            '<div style="text-align:right">' +
-              '<div style="font-size:11px;color:var(--muted);text-transform:uppercase;font-weight:700">Contract Total</div>' +
-              '<div style="font-size:20px;font-weight:800;color:var(--green)">P' + Number(o.total).toLocaleString('en-PH') + '</div>' +
-            '</div>' +
-          '</div>' +
-          '<div class="order-stepper-wrap">' +
-            renderOrderStepper(o) +
-          '</div>' +
-        '</div>';
-      }).join('');
+          return '<tr>' +
+            '<td><strong class="order-id">ORDER #' + o.id + '</strong><small style="display:block;color:var(--muted);font-size:11px;margin-top:4px">' + o.date + '</small></td>' +
+            '<td><div style="display:flex;align-items:center;gap:8px;min-width:150px"><img class="order-thumb" src="' + o.itemPhoto + '" alt="' + o.itemName + '" style="width:44px;height:44px"><strong>' + o.itemName + '</strong></div></td>' +
+            '<td><strong>' + o.farmer + '</strong><small style="display:block;color:var(--muted);font-size:12px">' + (o.farmerPhone || 'N/A') + '</small></td>' +
+            '<td><strong>' + o.buyer + '</strong><small style="display:block;color:var(--muted);font-size:12px">' + (o.buyerPhone || 'N/A') + '</small></td>' +
+            '<td>' + o.qty + '</td>' +
+            '<td>' + getFulfillmentBadge(o.fulfillment) + '<small style="display:block;color:var(--muted);font-size:11px;margin-top:4px">' + (isPickup ? 'Pick-up farm gate' : 'Delivery destination') + ': ' + (o.buyerAddress || 'Guimba, Nueva Ecija') + '</small></td>' +
+            '<td><strong style="color:' + (isCancelled ? 'var(--muted);text-decoration:line-through' : 'var(--green)') + '">P' + Number(o.total).toLocaleString('en-PH') + '</strong></td>' +
+            '<td><span class="status-pill ' + statusClass + '">' + statusLabel + '</span>' +
+              (isCancelled ? '' : '<div style="min-width:250px;margin-top:8px"><small style="display:block;color:var(--muted);margin-bottom:6px">Step ' + o.currentStep + ' of 5</small>' + renderOrderStepper(o) + '</div>') +
+            '</td>' +
+          '</tr>';
+        }).join('') + '</tbody></table></div></div>';
     }
 
     function renderPaginationControls(totalPages) {
@@ -315,6 +298,65 @@
       saveOrders(DEFAULT_ORDERS.slice());
       showToast('Municipal orders reset to default sample dataset.', 'success');
       renderAllOrders();
+    }
+
+    function exportOrdersPDF() {
+      var orders = getOrders();
+      var filtered = orders.filter(function(o){
+        if (_currTab === 'active') return o.status !== 'completed' && o.currentStep < 5;
+        if (_currTab === 'completed') return o.status === 'completed' || o.currentStep === 5;
+        if (_currTab === 'Delivery' || _currTab === 'Pick-up') return o.fulfillment === _currTab;
+        return true;
+      });
+      if (!filtered.length) { showToast('No orders to export.', 'error'); return; }
+
+      var doc = new window.jspdf.jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+      var now = new Date();
+      var dateStr = now.toLocaleDateString('en-PH', { year:'numeric', month:'long', day:'numeric' });
+
+      doc.setFillColor(12, 40, 21);
+      doc.rect(0, 0, 297, 22, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(13);
+      doc.setFont('helvetica', 'bold');
+      doc.text('A.N.I.H.A.N. — Municipal Fulfillment Orders Report', 14, 10);
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'normal');
+      doc.text('LGU Admin   |   Generated: ' + dateStr, 14, 16);
+      doc.text('Records: ' + filtered.length, 265, 16);
+
+      doc.autoTable({
+        startY: 26,
+        head: [['Order ID', 'Item', 'Farmer', 'Buyer', 'Qty', 'Total (PHP)', 'Fulfillment', 'Step', 'Status']],
+        body: filtered.map(function(o){
+          var isCompleted = o.status === 'completed' || o.currentStep === 5;
+          return [
+            o.id,
+            o.itemName,
+            o.farmer + (o.farmerPhone ? ' (' + o.farmerPhone + ')' : ''),
+            o.buyer + (o.buyerPhone ? ' (' + o.buyerPhone + ')' : ''),
+            o.qty,
+            'P' + Number(o.total).toLocaleString('en-PH'),
+            o.fulfillment || '—',
+            o.currentStep + ' / 5',
+            isCompleted ? 'Completed' : 'Active'
+          ];
+        }),
+        headStyles: { fillColor: [12, 40, 21], textColor: 255, fontStyle: 'bold', fontSize: 8 },
+        bodyStyles: { fontSize: 7.5, textColor: [30, 30, 30] },
+        alternateRowStyles: { fillColor: [245, 250, 246] },
+        columnStyles: { 0:{cellWidth:22}, 1:{cellWidth:38}, 2:{cellWidth:38}, 3:{cellWidth:38}, 4:{cellWidth:18}, 5:{cellWidth:22}, 6:{cellWidth:20}, 7:{cellWidth:14}, 8:{cellWidth:20} },
+        margin: { left: 14, right: 14 },
+        didDrawPage: function(d){
+          doc.setFontSize(7);
+          doc.setTextColor(150);
+          doc.text('A.N.I.H.A.N. Agricultural Coordination Platform — Fulfillment Orders Report', 14, doc.internal.pageSize.height - 6);
+          doc.text('Page ' + d.pageNumber, 280, doc.internal.pageSize.height - 6);
+        }
+      });
+
+      doc.save('ANIHAN_Orders_' + now.toISOString().slice(0,10) + '.pdf');
+      showToast('\u2713 Orders PDF exported!', 'success');
     }
   </script>
 </body>

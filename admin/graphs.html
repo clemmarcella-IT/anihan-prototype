@@ -7,6 +7,8 @@
   <link rel="stylesheet" href="../styles.css">
   <script src="../app.js" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
   <style>
     .graphs-hero{background:linear-gradient(135deg,#0c2815,#1b4f2c,#2d7342);padding:32px 28px;color:#fff;box-shadow:0 6px 20px rgba(12,40,21,.15)}
     .graphs-hero h1{font-size:28px;font-weight:800;margin-bottom:6px;color:#fff}
@@ -30,6 +32,8 @@
     .page-btn.active{background:var(--green);color:#fff;border-color:var(--green)}
     .page-btn:disabled{opacity:0.4;cursor:not-allowed}
     .table-footer{display:flex;justify-content:space-between;align-items:center;padding:12px 18px;background:#fdfbf7;border-top:1px solid var(--border);flex-wrap:wrap;gap:12px}
+    .btn-pdf{background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;border:none;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:5px;transition:all .2s}
+    .btn-pdf:hover{background:linear-gradient(135deg,#b91c1c,#991b1b);transform:translateY(-1px);box-shadow:0 4px 12px rgba(220,38,38,.3)}
   </style>
 </head>
 <body>
@@ -109,6 +113,7 @@
             <span class="level-balanced">✓ 3 Balanced Supply</span>
           </div>
           <div style="display:flex;align-items:center;gap:8px;margin-left:auto">
+            <button class="btn-pdf" onclick="exportHarvestPDF()" title="Export harvest timeline as PDF">&#128196; Export PDF</button>
             <label style="font-size:12px;color:var(--muted)">Show:</label>
             <select id="pageSizeSelect" class="page-size-select" onchange="changePageSize(this.value)">
               <option value="5" selected>5 per page</option>
@@ -632,6 +637,52 @@
 
       // Initial run
       applyTimelineFilters();
+
+      window.exportHarvestPDF = function() {
+        var rows = Array.from(document.querySelectorAll('#harvestTimelineTable tbody tr'));
+        var visibleRows = rows.filter(function(r){ return r.style.display !== 'none'; });
+        if (!visibleRows.length) { if (typeof showToast === 'function') showToast('No data to export.', 'error'); return; }
+
+        var doc = new window.jspdf.jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+        var now = new Date();
+        var dateStr = now.toLocaleDateString('en-PH', { year:'numeric', month:'long', day:'numeric' });
+
+        doc.setFillColor(12, 40, 21);
+        doc.rect(0, 0, 297, 22, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(13);
+        doc.setFont('helvetica', 'bold');
+        doc.text('A.N.I.H.A.N. — Harvest & Production Timeline Report', 14, 10);
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'normal');
+        doc.text('Municipal Agriculture Office   |   Generated: ' + dateStr, 14, 16);
+        doc.text('Records shown: ' + visibleRows.length, 265, 16);
+
+        var tableData = visibleRows.map(function(row){
+          var cells = row.querySelectorAll('td');
+          return Array.from(cells).map(function(td){ return td.innerText.replace(/\n+/g, ' ').trim(); });
+        });
+
+        doc.autoTable({
+          startY: 26,
+          head: [['Commodity & Category', 'Municipality', 'Est. Harvest', 'Demand', 'Harvest State', 'Timeline', 'Gov. Action']],
+          body: tableData,
+          headStyles: { fillColor: [12, 40, 21], textColor: 255, fontStyle: 'bold', fontSize: 8 },
+          bodyStyles: { fontSize: 7.5, textColor: [30, 30, 30] },
+          alternateRowStyles: { fillColor: [245, 250, 246] },
+          columnStyles: { 0:{cellWidth:45}, 1:{cellWidth:30}, 2:{cellWidth:25}, 3:{cellWidth:22}, 4:{cellWidth:38}, 5:{cellWidth:35}, 6:{cellWidth:52} },
+          margin: { left: 14, right: 14 },
+          didDrawPage: function(d){
+            doc.setFontSize(7);
+            doc.setTextColor(150);
+            doc.text('A.N.I.H.A.N. Agricultural Coordination Platform — Harvest Monitoring Report', 14, doc.internal.pageSize.height - 6);
+            doc.text('Page ' + d.pageNumber, 280, doc.internal.pageSize.height - 6);
+          }
+        });
+
+        doc.save('ANIHAN_HarvestTimeline_' + now.toISOString().slice(0,10) + '.pdf');
+        if (typeof showToast === 'function') showToast('\u2713 Harvest PDF exported!', 'success');
+      };
     });
   </script>
 </body>

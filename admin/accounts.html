@@ -6,6 +6,8 @@
   <title>Manage All Accounts — LGU Admin — A.N.I.H.A.N.</title>
   <link rel="stylesheet" href="../styles.css">
   <script src="../app.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
   <style>
     .acc-hero{background:linear-gradient(135deg,#0c2815,#1b4f2c,#2d7342);padding:32px 28px;color:#fff;box-shadow:0 6px 20px rgba(12,40,21,.15)}
     .acc-hero h1{font-size:28px;font-weight:800;margin-bottom:6px;color:#fff}
@@ -13,6 +15,8 @@
     
     /* PAGINATION STYLES */
     .table-footer{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-top:1px solid var(--border);background:#fafaf8;flex-wrap:wrap;gap:12px}
+    .btn-pdf{background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;border:none;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:5px;transition:all .2s}
+    .btn-pdf:hover{background:linear-gradient(135deg,#b91c1c,#991b1b);transform:translateY(-1px);box-shadow:0 4px 12px rgba(220,38,38,.3)}
     .pagination-controls{display:flex;align-items:center;gap:6px}
     .page-btn{border:1px solid var(--border);background:#fff;border-radius:6px;padding:6px 12px;font-size:12px;font-weight:600;color:var(--ink2);cursor:pointer;transition:all .15s}
     .page-btn:hover:not(:disabled){background:var(--cream);border-color:var(--green);color:var(--green)}
@@ -113,6 +117,7 @@
           <small id="recordCount" style="color:var(--muted)">Showing accounts</small>
         </div>
         <div style="display:flex;align-items:center;gap:10px">
+          <button class="btn-pdf" onclick="exportAccountsPDF()" title="Export all accounts as PDF">&#128196; Export PDF</button>
           <label style="font-size:12px;color:var(--muted)">Show:</label>
           <select id="pageSizeSelect" class="page-size-select" onchange="changePageSize(this.value)">
             <option value="5">5 per page</option>
@@ -512,6 +517,57 @@
       _pageSize = parseInt(size, 10) || 10;
       _currentPage = 1;
       renderAccountsTable();
+    }
+
+    function exportAccountsPDF() {
+      var filtered = getFilteredAccounts();
+      if (!filtered.length) { showToast('No records to export.', 'error'); return; }
+
+      var doc = new window.jspdf.jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+      var now = new Date();
+      var dateStr = now.toLocaleDateString('en-PH', { year:'numeric', month:'long', day:'numeric' });
+
+      doc.setFillColor(46, 111, 64);
+      doc.rect(0, 0, 297, 22, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(13);
+      doc.setFont('helvetica', 'bold');
+      doc.text('A.N.I.H.A.N. — Municipal Registry Records', 14, 10);
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'normal');
+      doc.text('LGU Admin: ' + (_user ? _user.name : 'LGU Admin') + '   |   Generated: ' + dateStr, 14, 16);
+      doc.text('Total Shown: ' + filtered.length, 265, 16);
+
+      doc.autoTable({
+        startY: 26,
+        head: [['Name', 'ID', 'Role', 'Phone', 'Email', 'Location', 'Reg. Source', 'Status']],
+        body: filtered.map(function(a){
+          return [
+            a.name,
+            a.id,
+            a.role,
+            a.phone || '—',
+            a.email || '—',
+            a.location || '—',
+            a.assistedBy ? 'Assisted by ' + a.assistedBy : 'Self / Direct',
+            a.status
+          ];
+        }),
+        headStyles: { fillColor: [46, 111, 64], textColor: 255, fontStyle: 'bold', fontSize: 8 },
+        bodyStyles: { fontSize: 8, textColor: [30, 30, 30] },
+        alternateRowStyles: { fillColor: [245, 250, 246] },
+        columnStyles: { 0:{cellWidth:38}, 1:{cellWidth:15}, 2:{cellWidth:20}, 3:{cellWidth:28}, 4:{cellWidth:44}, 5:{cellWidth:40}, 6:{cellWidth:40}, 7:{cellWidth:22} },
+        margin: { left: 14, right: 14 },
+        didDrawPage: function(d){
+          doc.setFontSize(7);
+          doc.setTextColor(150);
+          doc.text('A.N.I.H.A.N. Agricultural Coordination Platform — Confidential Municipal Registry', 14, doc.internal.pageSize.height - 6);
+          doc.text('Page ' + d.pageNumber, 280, doc.internal.pageSize.height - 6);
+        }
+      });
+
+      doc.save('ANIHAN_Accounts_' + now.toISOString().slice(0,10) + '.pdf');
+      showToast('\u2713 PDF report downloaded!', 'success');
     }
 
     function setAccountStatus(id, newStatus) {

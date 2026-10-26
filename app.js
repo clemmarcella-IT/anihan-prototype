@@ -439,7 +439,7 @@ function checkAssistedFarmerBanner(user) {
   b.style.cssText = 'background:#14532d;color:#fff;padding:10px 24px;font-size:13px;font-weight:600;display:flex;align-items:center;justify-content:space-between;position:sticky;top:68px;z-index:999;box-shadow:0 3px 10px rgba(0,0,0,.18);border-bottom:2px solid #facc15;flex-wrap:wrap;gap:10px;';
   b.innerHTML = '<span style="display:inline-flex;align-items:center;gap:8px;">' +
       '<strong style="background:#facc15;color:#1e293b;padding:3px 8px;border-radius:4px;font-size:11px;font-weight:800;">&#9888; AG WORKER ASSISTED MODE</strong>' +
-      '<span>You are logged into <strong>' + user.name + '</strong> (PIN: <code style="background:rgba(255,255,255,0.2);padding:2px 6px;border-radius:4px;font-weight:800;letter-spacing:1px">' + (user.passCode || 'N/A') + '</code>) to help sell crops &amp; animals.</span>' +
+      '<span>You are assisting <strong>' + user.name + '</strong> with crop and livestock listings.</span>' +
     '</span>' +
     '<button onclick="returnToAgWorkerPortal()" style="background:#facc15;color:#1e293b;border:0;border-radius:6px;padding:6px 14px;font-weight:800;font-size:12px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;box-shadow:0 2px 4px rgba(0,0,0,0.1);">&#8592; Back to Ag Worker Portal</button>';
   
