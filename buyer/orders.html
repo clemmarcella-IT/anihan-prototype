@@ -1,0 +1,383 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>My Orders &amp; Delivery Tracker — A.N.I.H.A.N.</title>
+  <link rel="stylesheet" href="../styles.css">
+  <script src="../app.js" defer></script>
+  <style>
+    .orders-hero{background:linear-gradient(120deg,#163352,#20548a,#2d73bc);padding:32px 28px;color:#fff}
+    .orders-hero h1{font-size:26px;font-weight:800;margin-bottom:6px}
+    .orders-hero p{font-size:14px;opacity:.9}
+    .tab-hero{display:flex;gap:8px;margin-top:18px;flex-wrap:wrap}
+    .tab-hero-btn{border:1.5px solid rgba(255,255,255,.35);border-radius:8px;padding:7px 16px;font-size:12px;font-weight:600;color:rgba(255,255,255,.85);background:transparent;cursor:pointer;transition:all .18s}
+    .tab-hero-btn.active,.tab-hero-btn:hover{background:rgba(255,255,255,.2);border-color:#fff;color:#fff}
+    .order-card{background:var(--white);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow-s);margin-bottom:20px;overflow:hidden}
+    .order-head{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;background:#fafaf8;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:10px}
+    .order-body{display:flex;gap:18px;padding:20px;align-items:center;flex-wrap:wrap}
+    .order-thumb{width:80px;height:80px;border-radius:10px;object-fit:cover;background:#eee;flex-shrink:0}
+    .order-info{flex:1;min-width:220px}
+    .order-stepper-wrap{background:var(--cream);padding:20px;border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+    .order-actions{padding:14px 20px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+    /* Chat modal */
+    .chat-messages{height:300px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:14px;background:var(--cream);display:flex;flex-direction:column;gap:10px}
+    .chat-msg{max-width:76%;padding:9px 13px;border-radius:12px;font-size:13px;line-height:1.5}
+    .chat-msg.mine{align-self:flex-end;background:var(--green);color:#fff;border-bottom-right-radius:2px}
+    .chat-msg.theirs{align-self:flex-start;background:#fff;border:1px solid var(--border);border-bottom-left-radius:2px;color:var(--ink)}
+    .chat-msg-name{font-size:10px;font-weight:700;opacity:.75;margin-bottom:3px}
+    .chat-input-row{display:flex;gap:8px;margin-top:12px}
+    .chat-input-row input{flex:1;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;font-size:13px}
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a href="index.html" class="brand">
+        <div class="brand-mark"><svg viewBox="0 0 48 48" fill="none"><path d="M24 40V18" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><path d="M24 27c-9 0-14-4-14-11 8 0 13 3 14 11Z" fill="#EAA023"/><path d="M24 20c1-8 6-12 14-12 0 7-5 12-14 12Z" fill="currentColor"/></svg></div>
+        <div class="brand-text"><strong>A.N.I.H.A.N.</strong><small>Buyer Portal</small></div>
+      </a>
+      <nav id="mainNav"></nav>
+      <div class="topbar-right">
+        <div id="userChip"></div>
+        <button id="logoutBtn">Log out</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="orders-hero">
+    <div style="max-width:1280px;margin:0 auto;padding:0 28px">
+      <div class="eyebrow" style="color:rgba(255,255,255,.8);margin-bottom:8px">Shopee-Style Order Tracking</div>
+      <h1>My Orders &amp; Delivery Status</h1>
+      <p>Track preparation, harvest dispatch, transport, and farm gate pick-ups with real-time status and open farmer chat.</p>
+      <div class="tab-hero" id="statusTabs">
+        <button class="tab-hero-btn active" data-st="all">All Orders</button>
+        <button class="tab-hero-btn" data-st="active">Active &amp; In-Transit</button>
+        <button class="tab-hero-btn" data-st="completed">Completed &amp; Received</button>
+        <button class="tab-hero-btn" data-st="cancelled">Cancelled</button>
+        <button class="tab-hero-btn" data-st="Delivery">Delivery Orders</button>
+        <button class="tab-hero-btn" data-st="Pick-up">Farm Gate Pick-ups</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-wrap">
+    <!-- STATS ROW -->
+    <div class="stat-grid" style="margin-bottom:24px">
+      <div class="stat-card">
+        <div class="stat-label">Total Pre-Orders</div>
+        <div class="stat-value" id="stTotal">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">In Progress</div>
+        <div class="stat-value" id="stActive" style="color:var(--green)">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Completed</div>
+        <div class="stat-value" id="stCompleted">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Total Amount</div>
+        <div class="stat-value" id="stAmount" style="font-size:22px">P0</div>
+      </div>
+    </div>
+
+    <!-- ORDERS LIST CONTAINER -->
+    <div id="ordersListContainer"></div>
+  </div>
+
+  <!-- CHAT MODAL -->
+  <div class="modal-backdrop hidden" id="chatModal">
+    <div class="modal-box" style="max-width:480px">
+      <div class="modal-head">
+        <div>
+          <h2 id="chatTitle">Chat with Farmer</h2>
+          <small id="chatSub" style="color:var(--muted);font-size:12px"></small>
+        </div>
+        <button class="modal-close" data-close-modal>&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="chatPhoneInfo" style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:8px 12px;margin-bottom:12px;font-size:12px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">
+          <div>Farmer Contact: <a id="chatFarmerPhoneLink" href="#" style="color:var(--green);font-weight:700;text-decoration:underline"></a></div>
+          <div>Your Contact: <strong id="chatBuyerPhoneText" style="color:var(--ink2)"></strong></div>
+        </div>
+        <div class="chat-messages" id="chatMessages"></div>
+        <form id="chatForm" class="chat-input-row" onsubmit="sendChat(event)">
+          <input type="text" id="chatInput" placeholder="Message farmer regarding arrival or harvest..." required autocomplete="off">
+          <button class="btn btn-primary btn-sm" type="submit">Send</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div id="toastEl" class="toast-notif"></div>
+
+  <script>
+    var _user;
+    var _currTab = 'all';
+    var _activeOrderId = null;
+
+    document.addEventListener('DOMContentLoaded', function(){
+      _user = requireAuth(['Buyer']);
+      if (!_user) return;
+
+      renderOrders();
+
+      document.querySelectorAll('#statusTabs .tab-hero-btn').forEach(function(b){
+        b.addEventListener('click', function(){
+          document.querySelectorAll('#statusTabs .tab-hero-btn').forEach(function(x){ x.classList.remove('active'); });
+          b.classList.add('active');
+          _currTab = b.getAttribute('data-st');
+          renderOrders();
+        });
+      });
+    });
+
+    function getBuyerOrders() {
+      var all = getOrders().filter(function(o){ return o.buyerId === _user.id; });
+      if (_currTab === 'active') return all.filter(function(o){ return o.status === 'active'; });
+      if (_currTab === 'completed') return all.filter(function(o){ return o.status === 'completed'; });
+      if (_currTab === 'cancelled') return all.filter(function(o){ return o.status === 'cancelled'; });
+      if (_currTab === 'Delivery') return all.filter(function(o){ return o.fulfillment === 'Delivery'; });
+      if (_currTab === 'Pick-up') return all.filter(function(o){ return o.fulfillment === 'Pick-up'; });
+      return all;
+    }
+
+    function renderOrders() {
+      var allOrders = getOrders().filter(function(o){ return o.buyerId === _user.id; });
+      var orders = getBuyerOrders();
+
+      // Update stats
+      document.getElementById('stTotal').textContent = allOrders.length;
+      document.getElementById('stActive').textContent = allOrders.filter(function(o){ return o.status === 'active'; }).length;
+      var totalSum = allOrders.reduce(function(s,o){
+        var n = Number(o.total);
+        return s + (o.status !== 'cancelled' && !isNaN(n) && n >= 0 ? n : 0);
+      }, 0);
+      document.getElementById('stAmount').textContent = 'P' + totalSum.toLocaleString('en-PH');
+
+      var c = document.getElementById('ordersListContainer');
+      if (orders.length === 0) {
+        c.innerHTML = '<div style="background:#fff;border-radius:12px;border:1px solid var(--border);padding:60px 20px;text-align:center;color:var(--muted)">' +
+          '<h3 style="font-size:18px;color:var(--ink);margin-bottom:6px">No orders matching this filter</h3>' +
+          '<p>Browse fresh harvests and livestock to place a new pre-order.</p>' +
+          '<a href="shop.html" class="btn btn-primary" style="margin-top:14px">Browse Marketplace</a>' +
+        '</div>';
+        return;
+      }
+
+      c.innerHTML = orders.map(function(o){
+        var labels = getStepLabels(o.fulfillment);
+        var currLabel = o.status === 'cancelled' ? 'Cancelled' : (labels[o.currentStep - 1] || 'Completed');
+        var isPickup = o.fulfillment === 'Pick-up';
+        var farmerPhone = o.farmerPhone || '0917-889-2101';
+        var buyerPhone = o.buyerPhone || _user.phone || '0918-554-3209';
+
+        var statusBadgeClass = 'status-active';
+        if (o.status === 'completed') statusBadgeClass = 'status-completed';
+        else if (o.status === 'cancelled') statusBadgeClass = 'status-cancelled';
+
+        var canCancel = (o.status === 'active' && o.currentStep === 1);
+        var isHarvestLocked = (o.status === 'active' && o.currentStep >= 2);
+
+        return '<div class="order-card">' +
+          '<div class="order-head">' +
+            '<div style="display:flex;align-items:center;gap:10px">' +
+              '<span class="order-id">ORDER #' + o.id + '</span>' +
+              getFulfillmentBadge(o.fulfillment) +
+              '<span class="status-pill ' + statusBadgeClass + '">' + currLabel + '</span>' +
+            '</div>' +
+            '<div style="font-size:12px;color:var(--muted)">Placed on: ' + o.date + '</div>' +
+          '</div>' +
+
+          '<div class="order-body">' +
+            '<img class="order-thumb" src="' + o.itemPhoto + '" alt="' + o.itemName + '">' +
+            '<div class="order-info">' +
+              '<h3 style="font-size:16px;font-weight:700;margin-bottom:4px">' + o.itemName + '</h3>' +
+              '<div style="font-size:13px;color:var(--ink2)">Quantity: <strong>' + o.qty + '</strong></div>' +
+              '<div style="font-size:12px;color:var(--ink2);margin-top:4px">Farmer: <strong>' + o.farmer + '</strong> &bull; <a href="tel:' + farmerPhone + '" style="color:var(--green);font-weight:600;text-decoration:underline">' + farmerPhone + '</a></div>' +
+              '<div style="font-size:12px;color:var(--muted);margin-top:2px">Buyer Contact: <strong>' + buyerPhone + '</strong></div>' +
+              '<div style="font-size:12px;color:var(--muted);margin-top:2px">' + (isPickup ? 'Pick-up Location: ' : 'Delivery Address: ') + '<strong>' + (o.buyerAddress || 'On file') + '</strong></div>' +
+            '</div>' +
+            '<div style="text-align:right;min-width:140px">' +
+              '<small style="font-size:11px;color:var(--muted);display:block">Total Due</small>' +
+              '<strong style="font-size:22px;color:' + (o.status === 'cancelled' ? 'var(--muted);text-decoration:line-through' : 'var(--green)') + '">P' + o.total.toLocaleString('en-PH') + '</strong>' +
+              '<small style="display:block;font-size:11px;color:var(--muted);margin-top:2px">' + (o.status === 'cancelled' ? 'Order Cancelled' : 'Cash on ' + o.fulfillment) + '</small>' +
+            '</div>' +
+          '</div>' +
+
+          '<div class="order-stepper-wrap">' +
+            '<div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px">' +
+              (o.status === 'cancelled' ? 'Order Status: Cancelled' : 'Fulfillment Status Tracker (Step ' + o.currentStep + ' of 5)') +
+            '</div>' +
+            (o.status === 'cancelled' ?
+              '<div style="background:#fdecea;border:1px solid #f5b3aa;padding:12px 16px;border-radius:8px;font-size:13px;color:#c0392b;font-weight:600">This order was cancelled prior to harvest preparation. Stock quantity was restored to the farmer.</div>' :
+              renderOrderStepper(o)) +
+          '</div>' +
+
+          '<div class="order-actions">' +
+            '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">' +
+              '<button class="btn btn-secondary btn-sm" onclick="openChat(\'' + o.id + '\',\'' + o.farmer.replace(/'/g, "\\'") + '\',\'' + o.itemName.replace(/'/g, "\\'") + '\')">' +
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>' +
+                ' Chat with Farmer' +
+              '</button>' +
+              (canCancel ?
+                '<button class="btn btn-danger btn-sm" onclick="cancelOrder(\'' + o.id + '\')">Cancel Order</button>' :
+                isHarvestLocked ?
+                '<span style="font-size:11px;color:var(--muted);background:#f1f5f9;padding:5px 10px;border-radius:6px;border:1px solid var(--border)">Harvested / In Prep &bull; Non-Cancellable</span>' : '') +
+            '</div>' +
+            '<div>' +
+              (o.status === 'active' && o.currentStep >= 4 ?
+                '<button class="btn btn-primary btn-sm" onclick="confirmReceipt(\'' + o.id + '\')">&#10003; Confirm ' + (isPickup ? 'Handover' : 'Delivery Received') + '</button>' :
+                o.status === 'completed' ?
+                '<span style="font-size:12px;font-weight:700;color:var(--green);display:inline-flex;align-items:center;gap:5px">&#10003; Order Complete &amp; Verified</span>' :
+                o.status === 'cancelled' ?
+                '<span style="font-size:12px;font-weight:700;color:#c0392b">Cancelled</span>' :
+                '<span style="font-size:12px;color:var(--muted)">Awaiting farmer prep &amp; transit...</span>') +
+            '</div>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+    }
+
+    function cancelOrder(orderId) {
+      if (!confirm('Are you sure you want to cancel Order #' + orderId + '? Once harvested, orders cannot be cancelled.')) return;
+      var orders = getOrders();
+      var o = orders.find(function(x){ return x.id === orderId; });
+      if (!o) return;
+
+      if (o.currentStep > 1) {
+        alert('This order has already been harvested / prepared and can no longer be cancelled.');
+        return;
+      }
+
+      o.status = 'cancelled';
+      saveOrders(orders);
+
+      // Return stock to listings
+      var listings = getListings();
+      var item = listings.find(function(l){ return l.id === o.listingId || l.name === o.itemName; });
+      if (item) {
+        var numQty = parseInt(o.qty) || 0;
+        item.qty = (parseInt(item.qty) || 0) + numQty;
+        saveListings(listings);
+      }
+
+      appendChatMessage(orderId, {
+        from: 'buyer',
+        name: _user.name,
+        msg: 'Order #' + orderId + ' was cancelled by the buyer before harvest prep.'
+      });
+
+      showToast('Order #' + orderId + ' has been cancelled.');
+      renderOrders();
+    }
+
+    function confirmReceipt(orderId) {
+      var orders = getOrders();
+      var o = orders.find(function(x){ return x.id === orderId; });
+      if (!o) return;
+      o.currentStep = 5;
+      o.status = 'completed';
+      saveOrders(orders);
+
+      appendChatMessage(orderId, {
+        from: 'buyer',
+        name: _user.name,
+        msg: 'Receipt confirmed! The produce/animal has been inspected and received in good condition. Payment completed. Salamat!'
+      });
+
+      showToast('Order #' + orderId + ' confirmed as completed!');
+      renderOrders();
+    }
+
+    // CHAT SYSTEM
+    function openChat(orderId, farmerName, itemName) {
+      _activeOrderId = orderId;
+      var orders = getOrders();
+      var o = orders.find(function(x){ return x.id === orderId; });
+      var farmerPhone = (o && o.farmerPhone) || '0917-889-2101';
+      var buyerPhone = (o && o.buyerPhone) || _user.phone || '0918-554-3209';
+
+      document.getElementById('chatTitle').textContent = 'Chat with ' + farmerName;
+      document.getElementById('chatSub').textContent = 'Order #' + orderId + ' &bull; ' + itemName;
+
+      var fLink = document.getElementById('chatFarmerPhoneLink');
+      if (fLink) {
+        fLink.textContent = farmerPhone;
+        fLink.href = 'tel:' + farmerPhone;
+      }
+      var bText = document.getElementById('chatBuyerPhoneText');
+      if (bText) {
+        bText.textContent = buyerPhone;
+      }
+
+      renderChatMessages();
+      openModal('chatModal');
+      setTimeout(function(){
+        var el = document.getElementById('chatMessages');
+        el.scrollTop = el.scrollHeight;
+        document.getElementById('chatInput').focus();
+      }, 100);
+    }
+
+    function renderChatMessages() {
+      if (!_activeOrderId) return;
+      var orders = getOrders();
+      var o = orders.find(function(x){ return x.id === _activeOrderId; });
+      var farmerPhone = (o && o.farmerPhone) || '0917-889-2101';
+      var buyerPhone = (o && o.buyerPhone) || _user.phone || '0918-554-3209';
+
+      var msgs = getChatMessages(_activeOrderId);
+      var c = document.getElementById('chatMessages');
+      if (msgs.length === 0) {
+        c.innerHTML = '<div style="text-align:center;color:var(--muted);padding:30px">No messages yet. Send a message to coordinate with the farmer.</div>';
+        return;
+      }
+      c.innerHTML = msgs.map(function(m){
+        var isMine = m.from === 'buyer';
+        var senderLabel = isMine
+          ? 'You (Buyer &bull; ' + buyerPhone + ')'
+          : (m.name || 'Farmer') + ' &bull; Tel: ' + farmerPhone;
+
+        return '<div class="chat-msg ' + (isMine ? 'mine' : 'theirs') + '">' +
+          '<div class="chat-msg-name">' + senderLabel + '</div>' +
+          '<div>' + m.msg + '</div>' +
+        '</div>';
+      }).join('');
+    }
+
+    function sendChat(e) {
+      e.preventDefault();
+      var inp = document.getElementById('chatInput');
+      var txt = inp.value.trim();
+      if (!txt || !_activeOrderId) return;
+
+      appendChatMessage(_activeOrderId, {
+        from: 'buyer',
+        name: _user.name,
+        msg: txt
+      });
+
+      inp.value = '';
+      renderChatMessages();
+      var el = document.getElementById('chatMessages');
+      el.scrollTop = el.scrollHeight;
+
+      // Simulated auto farmer response if first interaction
+      setTimeout(function(){
+        var msgs = getChatMessages(_activeOrderId);
+        if (msgs.length <= 4) {
+          appendChatMessage(_activeOrderId, {
+            from: 'farmer',
+            name: 'Farmer Partner',
+            msg: 'Maraming salamat po sa mensahe! Naka-note na po ang inyong schedule. I-a-update ko po kayo bago bumiyahe.'
+          });
+          renderChatMessages();
+          el.scrollTop = el.scrollHeight;
+        }
+      }, 1200);
+    }
+  </script>
+</body>
+</html>

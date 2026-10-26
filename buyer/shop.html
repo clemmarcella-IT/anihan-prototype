@@ -1,0 +1,447 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Browse Harvests &amp; Livestock — A.N.I.H.A.N.</title>
+  <link rel="stylesheet" href="../styles.css">
+  <script src="../app.js" defer></script>
+  <style>
+    .shop-hero{background:linear-gradient(120deg,#163352,#20548a,#2d73bc);padding:34px 28px;color:#fff}
+    .shop-hero h1{font-size:26px;font-weight:800;margin-bottom:6px}
+    .shop-hero p{font-size:14px;opacity:.9;max-width:620px}
+    .modal-product-img{width:100%;height:230px;object-fit:cover;border-radius:12px;margin-bottom:16px}
+    .detail-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--border);font-size:13px}
+    .detail-row:last-child{border:0}
+    .detail-row span{color:var(--muted)}
+    .detail-row strong{font-weight:600}
+    .order-qty-row{display:flex;align-items:center;gap:10px;margin-top:12px}
+    .qty-btn{width:36px;height:36px;border:1.5px solid var(--border);border-radius:8px;background:#fff;font-size:18px;cursor:pointer;display:grid;place-items:center;transition:all .18s;font-weight:700}
+    .qty-btn:hover{border-color:var(--green);color:var(--green)}
+    #qtyDisplay{font-size:18px;font-weight:800;width:60px;text-align:center}
+    .order-total-display{background:var(--green-soft);border-radius:8px;padding:14px 18px;text-align:center;margin-top:14px}
+    .order-total-display span{font-size:12px;color:var(--muted)}
+    .order-total-display strong{display:block;font-size:24px;font-weight:800;color:var(--green)}
+    .fulfillment-select{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+    .fc-opt{border:1.5px solid var(--border);border-radius:8px;padding:10px;cursor:pointer;text-align:center;transition:all .18s;font-size:12px;font-weight:600;color:var(--ink2)}
+    .fc-opt:hover,.fc-opt.selected{border-color:var(--green);background:var(--green-soft);color:var(--green)}
+    .fc-opt small{display:block;font-size:10px;font-weight:400;color:var(--muted);margin-top:3px}
+    .fc-opt.selected small{color:var(--green);opacity:.85}
+    .fc-opt.disabled{opacity:.4;pointer-events:none;background:#f3f3f3}
+    .no-results{text-align:center;padding:60px 20px;color:var(--muted)}
+    .no-results h3{font-size:18px;font-weight:700;color:var(--ink);margin-bottom:8px}
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a href="index.html" class="brand">
+        <div class="brand-mark"><svg viewBox="0 0 48 48" fill="none"><path d="M24 40V18" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><path d="M24 27c-9 0-14-4-14-11 8 0 13 3 14 11Z" fill="#EAA023"/><path d="M24 20c1-8 6-12 14-12 0 7-5 12-14 12Z" fill="currentColor"/></svg></div>
+        <div class="brand-text"><strong>A.N.I.H.A.N.</strong><small>Buyer Portal</small></div>
+      </a>
+      <nav id="mainNav"></nav>
+      <div class="topbar-right">
+        <div id="userChip"></div>
+        <button id="logoutBtn">Log out</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="shop-hero">
+    <div style="max-width:1280px;margin:0 auto;padding:0 28px">
+      <div class="eyebrow" style="color:rgba(255,255,255,.8);margin-bottom:8px">Market Catalog &bull; Direct Farmgate</div>
+      <h1>Browse Harvests, Animals &amp; Farm Eggs</h1>
+      <p>Connect directly with Central Luzon growers. Pre-order crops before harvest or purchase certified livestock and fresh farm eggs with verified Pick-up or Delivery terms.</p>
+    </div>
+  </div>
+
+  <div style="max-width:1280px;margin:0 auto;padding:24px 28px">
+    <!-- FILTERS BAR -->
+    <div class="filter-bar">
+      <div class="filter-tabs" id="catTabs">
+        <button class="filter-tab active" data-cat="all">All Products</button>
+        <button class="filter-tab" data-cat="crop">Crops</button>
+        <button class="filter-tab" data-cat="livestock">Livestock (Cattle, Pigs, Goats)</button>
+        <button class="filter-tab" data-cat="eggs">Eggs &amp; Poultry</button>
+      </div>
+      <div class="filter-tabs" id="fulfillTabs" style="margin-left:8px">
+        <button class="filter-tab active" data-ff="all">All Modes</button>
+        <button class="filter-tab" data-ff="Delivery">Delivery Available</button>
+        <button class="filter-tab" data-ff="Pick-up">Pick-up Available</button>
+      </div>
+      <div class="search-box">
+        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        <input type="text" id="searchInput" placeholder="Search crops, cattle, eggs, farmers...">
+      </div>
+    </div>
+
+    <!-- SORT & COUNT HEADER -->
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+      <p id="resultCount" style="font-size:13px;color:var(--muted)">Showing all products</p>
+      <select id="sortSelect" style="padding:8px 14px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;background:#fff">
+        <option value="default">Sort: Featured</option>
+        <option value="price-asc">Price: Low to High</option>
+        <option value="price-desc">Price: High to Low</option>
+        <option value="rating">Highest Rated</option>
+      </select>
+    </div>
+
+    <!-- PRODUCT GRID -->
+    <div class="product-grid" id="productGrid"></div>
+  </div>
+
+  <!-- ORDER MODAL -->
+  <div class="modal-backdrop hidden" id="orderModal">
+    <div class="modal-box" style="max-width:540px">
+      <div class="modal-head">
+        <h2 id="modalTitle">Direct Pre-Order</h2>
+        <button class="modal-close" data-close-modal>&times;</button>
+      </div>
+      <div class="modal-body">
+        <img id="modalImg" class="modal-product-img" src="" alt="Product">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
+          <div>
+            <h3 id="modalName" style="font-size:18px;font-weight:800"></h3>
+            <p id="modalEng" style="font-size:12px;color:var(--muted)"></p>
+          </div>
+          <div id="modalCatTag"></div>
+        </div>
+
+        <div style="margin-bottom:14px" id="modalRatingRow"></div>
+        <p id="modalDetails" style="font-size:13px;color:var(--ink2);line-height:1.5;margin-bottom:14px;padding:10px;background:var(--cream);border-radius:8px"></p>
+
+        <div style="background:#fafaf8;border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin-bottom:16px">
+          <div class="detail-row"><span>Farmer / Grower:</span><strong id="modalFarmer"></strong></div>
+          <div class="detail-row"><span>Farmer Mobile Tel:</span><strong id="modalFarmerPhone" style="color:var(--green)"></strong></div>
+          <div class="detail-row"><span>Farm Location:</span><strong id="modalLoc"></strong></div>
+          <div class="detail-row"><span>Harvest / Readiness:</span><strong id="modalDate"></strong></div>
+          <div class="detail-row"><span>Remaining Available:</span><strong id="modalAvail"></strong></div>
+          <div class="detail-row"><span>Unit Farmgate Price:</span><strong id="modalUnitPrice" style="color:var(--green)"></strong></div>
+        </div>
+
+        <!-- FULFILLMENT MODE SELECT -->
+        <div class="form-group">
+          <label>Fulfillment Preference for this Order</label>
+          <div class="fulfillment-select" id="fulfillmentOptions">
+            <div class="fc-opt" id="optDelivery" onclick="selectFulfillment('Delivery')">
+              <strong>Delivery</strong>
+              <small id="delNotes">Doorstep / Market delivery</small>
+            </div>
+            <div class="fc-opt" id="optPickup" onclick="selectFulfillment('Pick-up')">
+              <strong>Farm Gate Pick-up</strong>
+              <small id="pickupAddr">Buyer picks up at farm</small>
+            </div>
+          </div>
+        </div>
+
+        <!-- QUANTITY SELECTOR -->
+        <div class="form-group" style="margin-top:14px">
+          <label>Quantity to Pre-Order (<span id="modalUnitLbl">kg</span>)</label>
+          <div class="order-qty-row">
+            <button class="qty-btn" type="button" onclick="changeQty(-1)">&minus;</button>
+            <input type="number" id="qtyDisplay" min="1" value="1" oninput="onQtyChange(this.value)">
+            <button class="qty-btn" type="button" onclick="changeQty(1)">&#43;</button>
+            <span style="font-size:13px;color:var(--muted);margin-left:6px" id="maxQtyLbl"></span>
+          </div>
+        </div>
+
+        <!-- DELIVERY ADDRESS / SPECIAL NOTES -->
+        <div class="form-group" style="margin-top:14px">
+          <label id="addrLabel">Buyer Receiving / Delivery Address</label>
+          <input type="text" id="orderAddress" placeholder="Enter your market stall, store, or home delivery address" value="Stall #14, Cabanatuan Public Market">
+        </div>
+
+        <!-- TOTAL DISPLAY -->
+        <div class="order-total-display">
+          <span>Estimated Total Payment (Farmgate Direct)</span>
+          <strong id="modalTotal">P0</strong>
+          <small style="font-size:11px;color:var(--muted)">No platform commission added &bull; Cash on Pick-up/Delivery</small>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-secondary" data-close-modal>Cancel</button>
+        <button class="btn btn-primary" id="confirmOrderBtn" onclick="placeOrder()">Confirm &amp; Place Pre-Order</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toastEl" class="toast-notif"></div>
+
+  <script>
+    var _user;
+    var _currCat = 'all', _currFulfill = 'all', _searchQ = '', _sort = 'default';
+    var _selectedItem = null;
+    var _orderQty = 1;
+    var _selectedFulfill = 'Delivery';
+
+    document.addEventListener('DOMContentLoaded', function(){
+      _user = requireAuth(['Buyer']);
+      if (!_user) return;
+
+      renderCatalog();
+
+      // Category tabs
+      document.querySelectorAll('#catTabs .filter-tab').forEach(function(b){
+        b.addEventListener('click', function(){
+          document.querySelectorAll('#catTabs .filter-tab').forEach(function(x){ x.classList.remove('active'); });
+          b.classList.add('active');
+          _currCat = b.getAttribute('data-cat');
+          renderCatalog();
+        });
+      });
+
+      // Fulfillment tabs
+      document.querySelectorAll('#fulfillTabs .filter-tab').forEach(function(b){
+        b.addEventListener('click', function(){
+          document.querySelectorAll('#fulfillTabs .filter-tab').forEach(function(x){ x.classList.remove('active'); });
+          b.classList.add('active');
+          _currFulfill = b.getAttribute('data-ff');
+          renderCatalog();
+        });
+      });
+
+      // Search
+      document.getElementById('searchInput').addEventListener('input', function(e){
+        _searchQ = e.target.value.toLowerCase().trim();
+        renderCatalog();
+      });
+
+      // Sort
+      document.getElementById('sortSelect').addEventListener('change', function(e){
+        _sort = e.target.value;
+        renderCatalog();
+      });
+    });
+
+    function getFilteredListings() {
+      var list = getListings().filter(function(item){
+        if (item.status === 'inactive') return false;
+        if (_currCat !== 'all' && item.type !== _currCat) return false;
+        if (_currFulfill !== 'all') {
+          if (item.fulfillment !== 'Both' && item.fulfillment !== _currFulfill) return false;
+        }
+        if (_searchQ) {
+          var str = (item.name + ' ' + (item.english||'') + ' ' + item.farmer + ' ' + item.location + ' ' + item.category).toLowerCase();
+          if (!str.includes(_searchQ)) return false;
+        }
+        return true;
+      });
+
+      if (_sort === 'price-asc') list.sort(function(a,b){ return a.price - b.price; });
+      else if (_sort === 'price-desc') list.sort(function(a,b){ return b.price - a.price; });
+      else if (_sort === 'rating') list.sort(function(a,b){ return b.rating - a.rating; });
+
+      return list;
+    }
+
+    function renderCatalog() {
+      var items = getFilteredListings();
+      var grid = document.getElementById('productGrid');
+      var rc = document.getElementById('resultCount');
+      rc.textContent = 'Showing ' + items.length + ' harvest & livestock listings';
+
+      if (items.length === 0) {
+        grid.innerHTML = '<div class="no-results" style="grid-column:1/-1">' +
+          '<h3>No listings found</h3><p>Try adjusting your search terms or category filters.</p>' +
+        '</div>';
+        return;
+      }
+
+      grid.innerHTML = items.map(function(item){
+        var pct = Math.round((item.available / item.total) * 100);
+        return '<div class="product-card" onclick="openOrderModal(' + item.id + ')">' +
+          '<img class="card-img" src="' + item.photo + '" alt="' + item.name + '" loading="lazy">' +
+          '<div class="card-body">' +
+            '<div class="card-top">' +
+              '<div class="item-name">' + item.name + '</div>' +
+              getCategoryTag(item.type) +
+            '</div>' +
+            '<div class="item-english">' + (item.english || '') + '</div>' +
+            '<div class="card-price">P' + item.price.toLocaleString('en-PH') + '<span> / ' + item.unit + '</span></div>' +
+            '<div class="card-meta">' +
+              getFulfillmentBadge(item.fulfillment) +
+              renderStars(item.rating) +
+            '</div>' +
+            '<div style="margin-top:8px">' +
+              '<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:4px">' +
+                '<span>Available Stock</span><span>' + item.available + ' ' + item.unit + '</span>' +
+              '</div>' +
+              '<div style="height:5px;background:var(--border);border-radius:3px;overflow:hidden">' +
+                '<div style="width:' + pct + '%;height:100%;background:var(--green)"></div>' +
+              '</div>' +
+            '</div>' +
+            '<div class="card-farmer">' +
+              '<div class="farmer-av">' + (item.farmerInitials || item.farmer.slice(0,2).toUpperCase()) + '</div>' +
+              '<div style="flex:1;min-width:0">' +
+                '<div class="farmer-name">' + item.farmer + '</div>' +
+                '<div class="farmer-loc">' + item.location + ' &bull; Ready: ' + item.harvestDate + '</div>' +
+                '<div style="font-size:11px;color:var(--green);font-weight:700;display:flex;align-items:center;gap:4px;margin-top:2px">' +
+                  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>' +
+                  '<a href="tel:' + (item.farmerPhone || '0917-889-2101') + '" style="color:var(--green);text-decoration:none" onclick="event.stopPropagation()">' + (item.farmerPhone || '0917-889-2101') + '</a>' +
+                '</div>' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+          '<div class="card-footer">' +
+            '<button class="btn btn-primary btn-sm btn-full">Pre-Order Now</button>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+    }
+
+    function openOrderModal(id) {
+      var item = getListings().find(function(l){ return l.id === id; });
+      if (!item) return;
+      _selectedItem = item;
+      _orderQty = item.type === 'livestock' ? 1 : Math.min(10, item.available);
+
+      document.getElementById('modalImg').src = item.photo;
+      document.getElementById('modalName').textContent = item.name;
+      document.getElementById('modalEng').textContent = item.english || '';
+      document.getElementById('modalCatTag').innerHTML = getCategoryTag(item.type);
+      document.getElementById('modalRatingRow').innerHTML = renderStars(item.rating) + ' <span style="font-size:12px;color:var(--muted);margin-left:6px">(' + item.ratingCount + ' verified reviews)</span>';
+      document.getElementById('modalDetails').textContent = item.details || 'Fresh local produce direct from farmer.';
+
+      var fPhone = item.farmerPhone || '0917-889-2101';
+      document.getElementById('modalFarmer').textContent = item.farmer;
+      document.getElementById('modalFarmerPhone').innerHTML = '<a href="tel:' + fPhone + '" style="color:var(--green);text-decoration:underline">' + fPhone + '</a>';
+      document.getElementById('modalLoc').textContent = item.location;
+      document.getElementById('modalDate').textContent = item.harvestDate;
+      document.getElementById('modalAvail').textContent = item.available + ' ' + item.unit;
+      document.getElementById('modalUnitPrice').textContent = 'P' + item.price.toLocaleString('en-PH') + ' / ' + item.unit;
+      document.getElementById('modalUnitLbl').textContent = item.unit;
+      document.getElementById('maxQtyLbl').textContent = '(Max: ' + item.available + ' ' + item.unit + ')';
+
+      // Setup fulfillment options based on item capabilities
+      var optDel = document.getElementById('optDelivery');
+      var optPick = document.getElementById('optPickup');
+      document.getElementById('delNotes').textContent = item.deliveryNotes || 'Standard delivery';
+      document.getElementById('pickupAddr').textContent = item.pickupAddress || 'Farm gate address';
+
+      if (item.fulfillment === 'Pick-up') {
+        optDel.classList.add('disabled');
+        optPick.classList.remove('disabled');
+        selectFulfillment('Pick-up');
+      } else if (item.fulfillment === 'Delivery') {
+        optPick.classList.add('disabled');
+        optDel.classList.remove('disabled');
+        selectFulfillment('Delivery');
+      } else {
+        optDel.classList.remove('disabled');
+        optPick.classList.remove('disabled');
+        selectFulfillment('Delivery');
+      }
+
+      var qInput = document.getElementById('qtyDisplay');
+      qInput.value = _orderQty;
+      qInput.max = item.available;
+
+      updateModalTotal();
+      openModal('orderModal');
+    }
+
+    function selectFulfillment(mode) {
+      _selectedFulfill = mode;
+      var optDel = document.getElementById('optDelivery');
+      var optPick = document.getElementById('optPickup');
+      optDel.classList.toggle('selected', mode === 'Delivery');
+      optPick.classList.toggle('selected', mode === 'Pick-up');
+
+      var addrLbl = document.getElementById('addrLabel');
+      var addrInp = document.getElementById('orderAddress');
+      if (mode === 'Delivery') {
+        addrLbl.textContent = 'Buyer Delivery Address (Where to drop off produce/animals)';
+        addrInp.placeholder = 'e.g. Stall #14, Cabanatuan Public Market';
+      } else {
+        addrLbl.textContent = 'Buyer Pick-up Contact Note (Who will pick up / vehicle hauler details)';
+        addrInp.placeholder = 'e.g. Driver Ricky with hauler plate ABC-123 arriving Wednesday morning';
+      }
+    }
+
+    function changeQty(delta) {
+      if (!_selectedItem) return;
+      var n = _orderQty + delta;
+      if (n < 1) n = 1;
+      if (n > _selectedItem.available) n = _selectedItem.available;
+      _orderQty = n;
+      document.getElementById('qtyDisplay').value = n;
+      updateModalTotal();
+    }
+
+    function onQtyChange(val) {
+      var n = parseInt(val, 10);
+      if (isNaN(n) || n < 1) n = 1;
+      if (_selectedItem && n > _selectedItem.available) n = _selectedItem.available;
+      _orderQty = n;
+      document.getElementById('qtyDisplay').value = n;
+      updateModalTotal();
+    }
+
+    function updateModalTotal() {
+      if (!_selectedItem) return;
+      var total = _orderQty * _selectedItem.price;
+      document.getElementById('modalTotal').textContent = 'P' + total.toLocaleString('en-PH');
+    }
+
+    function placeOrder() {
+      if (!_selectedItem || !_user) return;
+      var addr = document.getElementById('orderAddress').value.trim();
+      if (!addr) {
+        alert('Please provide an address or pickup coordination note.');
+        return;
+      }
+
+      var total = _orderQty * _selectedItem.price;
+      var newOrderId = 'ANH-' + Math.floor(1000 + Math.random() * 9000);
+
+      var newOrder = {
+        id: newOrderId,
+        listingId: _selectedItem.id,
+        itemName: _selectedItem.name,
+        itemPhoto: _selectedItem.photo,
+        qty: _orderQty + ' ' + _selectedItem.unit,
+        total: total,
+        farmerId: _selectedItem.farmerId,
+        farmer: _selectedItem.farmer,
+        buyerId: _user.id,
+        buyer: _user.name,
+        buyerAddress: addr,
+        fulfillment: _selectedFulfill,
+        currentStep: 1, // Order Confirmed
+        date: new Date().toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' }),
+        status: 'active'
+      };
+
+      // Add to orders
+      var orders = getOrders();
+      orders.unshift(newOrder);
+      saveOrders(orders);
+
+      // Decrement available stock
+      var listings = getListings();
+      var target = listings.find(function(l){ return l.id === _selectedItem.id; });
+      if (target) {
+        target.available = Math.max(0, target.available - _orderQty);
+        saveListings(listings);
+      }
+
+      // Add initial chat confirmation
+      appendChatMessage(newOrderId, {
+        from: 'buyer',
+        name: _user.name,
+        msg: 'Good day! I have placed order #' + newOrderId + ' for ' + _orderQty + ' ' + _selectedItem.unit + ' of ' + _selectedItem.name + ' (' + _selectedFulfill + '). Address/Note: ' + addr
+      });
+
+      closeModal('orderModal');
+      showToast('Order #' + newOrderId + ' placed successfully!');
+      renderCatalog();
+
+      setTimeout(function(){
+        if (confirm('Pre-Order #' + newOrderId + ' placed! Would you like to view it in My Orders now?')) {
+          window.location.href = 'orders.html';
+        }
+      }, 400);
+    }
+  </script>
+</body>
+</html>

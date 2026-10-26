@@ -1,0 +1,638 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>The 3 Over-Harvest Graphs &amp; Harvest Timeline — LGU Admin — A.N.I.H.A.N.</title>
+  <link rel="stylesheet" href="../styles.css">
+  <script src="../app.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    .graphs-hero{background:linear-gradient(135deg,#0c2815,#1b4f2c,#2d7342);padding:32px 28px;color:#fff;box-shadow:0 6px 20px rgba(12,40,21,.15)}
+    .graphs-hero h1{font-size:28px;font-weight:800;margin-bottom:6px;color:#fff}
+    .graphs-hero p{font-size:14px;opacity:.92;max-width:680px}
+    .big-graph-card{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:24px;box-shadow:var(--shadow-s);margin-bottom:24px}
+    .big-graph-card h2{font-size:18px;font-weight:800;margin-bottom:4px}
+    .big-graph-card p{font-size:13px;color:var(--muted);margin-bottom:20px}
+    .timeline-table{width:100%;border-collapse:collapse}
+    .timeline-table th{background:var(--cream);font-size:11px;font-weight:700;text-transform:uppercase;color:var(--muted);padding:10px 14px;text-align:left;border-bottom:2px solid var(--border)}
+    .timeline-table td{padding:12px 14px;border-bottom:1px solid var(--border);font-size:13px}
+    .level-over{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:12px;font-size:11px;font-weight:700;background:#fee2e2;color:#991b1b;border:1px solid #fca5a5}
+    .level-low{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:12px;font-size:11px;font-weight:700;background:#fef3c7;color:#92400e;border:1px solid #fcd34d}
+    .level-balanced{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:12px;font-size:11px;font-weight:700;background:#ecfdf5;color:#065f46;border:1px solid #a7f3d0}
+    .t-filter-btn{border:1px solid var(--border);background:#fff;border-radius:20px;padding:5px 13px;font-size:12px;font-weight:600;cursor:pointer;color:var(--ink2);transition:all .15s}
+    .t-filter-btn:hover{background:var(--cream)}
+    .t-filter-btn.active{background:var(--green);color:#fff;border-color:var(--green)}
+    .page-size-select{padding:6px 12px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-weight:600;background:#fff;color:var(--ink)}
+    .pagination-controls{display:flex;align-items:center;gap:6px}
+    .page-btn{padding:5px 10px;border:1px solid var(--border);background:#fff;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;color:var(--ink)}
+    .page-btn:hover{background:var(--cream)}
+    .page-btn.active{background:var(--green);color:#fff;border-color:var(--green)}
+    .page-btn:disabled{opacity:0.4;cursor:not-allowed}
+    .table-footer{display:flex;justify-content:space-between;align-items:center;padding:12px 18px;background:#fdfbf7;border-top:1px solid var(--border);flex-wrap:wrap;gap:12px}
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a href="index.html" class="brand">
+        <div class="brand-mark" style="background:#1b4f2c">
+          <svg viewBox="0 0 48 48" fill="none"><path d="M24 40V18" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><path d="M24 27c-9 0-14-4-14-11 8 0 13 3 14 11Z" fill="#EAA023"/><path d="M24 20c1-8 6-12 14-12 0 7-5 12-14 12Z" fill="currentColor"/></svg>
+        </div>
+        <div class="brand-text"><strong>A.N.I.H.A.N.</strong><small>LGU Municipal Agriculture Office</small></div>
+      </a>
+      <nav id="mainNav"></nav>
+      <div class="topbar-right">
+        <div id="userChip"></div>
+        <button id="logoutBtn">Log out</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="graphs-hero">
+    <div style="max-width:1280px;margin:0 auto;padding:0 28px">
+      <div class="eyebrow" style="color:rgba(255,255,255,.85);margin-bottom:8px">Surveillance &amp; Harvest Analytics Division</div>
+      <h1>The 3 Over-Harvest Predictive Graphs &amp; Harvest Timeline</h1>
+      <p>Data-driven coordination to monitor impending harvest gluts across Guimba and neighboring clusters, identify farmgate crash risks, and trigger proactive municipal interventions.</p>
+    </div>
+  </div>
+
+  <div class="page-wrap">
+    <!-- GRAPH 1 -->
+    <div class="big-graph-card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px">
+        <div>
+          <h2>Graph 1: Municipal Supply vs. Market Demand (Surplus &amp; Deficit)</h2>
+          <p>Identifies impending harvest gluts before crops rot in the field. When Supply exceeds Demand by &gt;40%, an Over-Harvest Alert is raised.</p>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-sm btn-primary" onclick="showToast('Rolling store trucks sent to buy and sell excess tomatoes and squash.','success')">&#128666; Send Rolling Store Trucks</button>
+        </div>
+      </div>
+      <div style="height:320px">
+        <canvas id="bigChartSupply"></canvas>
+      </div>
+    </div>
+
+    <!-- GRAPH 2 & GRAPH 3 ROW -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-bottom:24px">
+      <!-- GRAPH 2 -->
+      <div class="big-graph-card" style="margin-bottom:0">
+        <h2>Graph 2: Spoilage &amp; Post-Harvest Waste Risk</h2>
+        <p>Percentage of total output vulnerable to spoilage based on perishability index and uncommitted volume.</p>
+        <div style="height:280px;display:flex;align-items:center;justify-content:center">
+          <canvas id="bigChartRisk"></canvas>
+        </div>
+      </div>
+
+      <!-- GRAPH 3 -->
+      <div class="big-graph-card" style="margin-bottom:0">
+        <h2>Graph 3: 30-Day Farmgate Price Volatility</h2>
+        <p>Monitors price plunges during glut seasons versus price stability achieved via direct pre-ordering contracts.</p>
+        <div style="height:280px">
+          <canvas id="bigChartPrice"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- MUNICIPAL HARVEST & PRODUCTION TIMELINE CALENDAR -->
+    <div class="panel">
+      <div class="panel-head" style="align-items:flex-start">
+        <div>
+          <h2>Harvest &amp; Production Timeline Calendar</h2>
+          <small style="color:var(--muted);font-size:12px">Municipal readiness timeline tracking over-harvest (surplus/glut) and low harvest (deficit/shortage) across crops, livestock &amp; eggs</small>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <span class="level-over">⚠ 5 Over-Harvest (Glut Risk)</span>
+            <span class="level-low">📉 4 Low Harvest (Deficit)</span>
+            <span class="level-balanced">✓ 3 Balanced Supply</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;margin-left:auto">
+            <label style="font-size:12px;color:var(--muted)">Show:</label>
+            <select id="pageSizeSelect" class="page-size-select" onchange="changePageSize(this.value)">
+              <option value="5" selected>5 per page</option>
+              <option value="10">10 per page</option>
+              <option value="15">15 per page</option>
+              <option value="20">20 per page</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- FILTER CONTROLS BAR -->
+      <div style="padding:12px 18px;background:#fdfbf7;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
+        <div style="display:flex;gap:6px;flex-wrap:wrap" id="catFilterGroup">
+          <button class="t-filter-btn active" data-cat="all">All Commodities (11)</button>
+          <button class="t-filter-btn" data-cat="crop">Crops / Gulay &amp; Butil</button>
+          <button class="t-filter-btn" data-cat="livestock">Livestock / Live Animals</button>
+          <button class="t-filter-btn" data-cat="eggs">Eggs &amp; Poultry</button>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap" id="statusFilterGroup">
+          <button class="t-filter-btn active" data-status="all">All Harvest States</button>
+          <button class="t-filter-btn" data-status="over" style="color:#991b1b">⚠ Over-Harvest Only</button>
+          <button class="t-filter-btn" data-status="low" style="color:#92400e">📉 Low Harvest Only</button>
+          <button class="t-filter-btn" data-status="balanced" style="color:#065f46">✓ Balanced Only</button>
+        </div>
+      </div>
+
+      <div class="panel-body" style="padding:0;overflow-x:auto">
+        <table class="timeline-table" id="harvestTimelineTable">
+          <thead>
+            <tr>
+              <th>Commodity &amp; Category</th>
+              <th>Municipality / Cluster</th>
+              <th>Est. Harvest / Production</th>
+              <th>Local Market Demand</th>
+              <th>Harvest State / Supply Gap</th>
+              <th>Readiness Timeline</th>
+              <th>What Government Does to Help (Action)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- CROPS: OVER-HARVEST -->
+            <tr data-cat="crop" data-status="over">
+              <td>
+                <div style="display:flex;align-items:center;gap:8px">
+                  <span class="cat-tag cat-crop">Crop</span>
+                  <div>
+                    <strong>Kamatis (Diamante Max)</strong>
+                    <small style="display:block;color:var(--muted);font-size:11px">High perishability (4-day shelf life)</small>
+                  </div>
+                </div>
+              </td>
+              <td>Guimba, Nueva Ecija</td>
+              <td><strong>11.3 tons</strong></td>
+              <td>5.1 tons</td>
+              <td>
+                <span class="level-over">⚠ Over-Harvest (+121% Extra)</span>
+                <small style="display:block;color:var(--red);font-size:11px;margin-top:2px">45% already ordered</small>
+              </td>
+              <td>Nov 18 &ndash; Nov 26, 2026</td>
+              <td>
+                <button class="btn btn-sm btn-primary" onclick="showToast('Rolling store truck dispatched to buy and sell excess tomatoes.','success')">&#128666; Send Rolling Store Truck</button>
+              </td>
+            </tr>
+
+            <tr data-cat="crop" data-status="over">
+              <td>
+                <div style="display:flex;align-items:center;gap:8px">
+                  <span class="cat-tag cat-crop">Crop</span>
+                  <div>
+                    <strong>Kalabasa (Suprema Squash)</strong>
+                    <small style="display:block;color:var(--muted);font-size:11px">Bulk post-harvest storage needed</small>
+                  </div>
+                </div>
+              </td>
+              <td>Talavera, Nueva Ecija</td>
+              <td><strong>8.9 tons</strong></td>
+              <td>5.5 tons</td>
+              <td>
+                <span class="level-over">⚠ Over-Harvest (+62% Extra)</span>
+                <small style="display:block;color:var(--red);font-size:11px;margin-top:2px">62% already ordered</small>
+              </td>
+              <td>Nov 5 &ndash; Nov 20, 2026</td>
+              <td>
+                <button class="btn btn-sm btn-secondary" onclick="showToast('Cold storage warehouse space reserved to keep squash fresh.','success')">&#10052; Store in Cold Warehouse</button>
+              </td>
+            </tr>
+
+            <!-- LIVESTOCK: OVER-HARVEST -->
+            <tr data-cat="livestock" data-status="over">
+              <td>
+                <div style="display:flex;align-items:center;gap:8px">
+                  <span class="cat-tag cat-livestock">Livestock</span>
+                  <div>
+                    <strong>Native Pig (Liveweight 80kg)</strong>
+                    <small style="display:block;color:var(--muted);font-size:11px">Feed cost accumulating</small>
+                  </div>
+                </div>
+              </td>
+              <td>Guimba, Nueva Ecija</td>
+              <td><strong>45 heads ready</strong></td>
+              <td>22 heads demand</td>
+              <td>
+                <span class="level-over">⚠ Over-Harvest (+105% Extra)</span>
+                <small style="display:block;color:var(--red);font-size:11px;margin-top:2px">High feed cost if delayed</small>
+              </td>
+              <td>Nov 20 &ndash; Dec 5, 2026</td>
+              <td>
+                <button class="btn btn-sm btn-primary" onclick="showToast('Connected farmer to bulk meat buyers and butcher shops.','success')">&#129385; Find Meat Buyers</button>
+              </td>
+            </tr>
+
+            <!-- EGGS: OVER-HARVEST -->
+            <tr data-cat="eggs" data-status="over">
+              <td>
+                <div style="display:flex;align-items:center;gap:8px">
+                  <span class="cat-tag cat-eggs">Eggs</span>
+                  <div>
+                    <strong>Duck Eggs / Balut (Pateros stock)</strong>
+                    <small style="display:block;color:var(--muted);font-size:11px">Fixed 18-day incubation window</small>
+                  </div>
+                </div>
+              </td>
+              <td>Pateros / Rizal corridor</td>
+              <td><strong>12,000 pcs</strong></td>
+              <td>8,500 pcs demand</td>
+              <td>
+                <span class="level-over">⚠ Over-Harvest (+41% Extra)</span>
+                <small style="display:block;color:var(--red);font-size:11px;margin-top:2px">Urgent incubation expiry</small>
+              </td>
+              <td>Nov 1 &ndash; Dec 1, 2026</td>
+              <td>
+                <button class="btn btn-sm btn-secondary" onclick="showToast('Discount offered to food factories to buy all extra eggs quickly.','success')">&#127991; Discount for Big Buyers</button>
+              </td>
+            </tr>
+
+            <!-- CROPS: LOW HARVEST -->
+            <tr data-cat="crop" data-status="low">
+              <td>
+                <div style="display:flex;align-items:center;gap:8px">
+                  <span class="cat-tag cat-crop">Crop</span>
+                  <div>
+                    <strong>Talong (Long Purple)</strong>
+                    <small style="display:block;color:var(--muted);font-size:11px">High restaurant and wet market demand</small>
+                  </div>
+                </div>
+              </td>
+              <td>San Fernando, Pampanga</td>
+              <td><strong>3.1 tons</strong></td>
+              <td>5.8 tons</td>
+              <td>
+                <span class="level-low">📉 Low Harvest (-47% Shortage)</span>
+                <small style="display:block;color:var(--gold);font-size:11px;margin-top:2px">Farmgate prices high</small>
+              </td>
+              <td>Nov 22 &ndash; Nov 30, 2026</td>
+              <td>
+                <span class="status-pill status-active">&#127793; Ask Farmers to Plant More</span>
+              </td>
+            </tr>
+
+            <tr data-cat="crop" data-status="low">
+              <td>
+                <div style="display:flex;align-items:center;gap:8px">
+                  <span class="cat-tag cat-crop">Crop</span>
+                  <div>
+                    <strong>Mangga (Carabao Sweet)</strong>
+                    <small style="display:block;color:var(--muted);font-size:11px">Early season harvest</small>
+                  </div>
+                </div>
+              </td>
+              <td>Guiguinto, Bulacan</td>
+              <td><strong>4.2 tons</strong></td>
+              <td>7.5 tons</td>
+              <td>
+                <span class="level-low">📉 Low Harvest (-44% Shortage)</span>
+                <small style="display:block;color:var(--gold);font-size:11px;margin-top:2px">High buyer competition</small>
+              </td>
+              <td>Nov 15 &ndash; Dec 15, 2026</td>
+              <td>
+                <span class="status-pill status-active">&#129309; Share with Nearby Towns</span>
+              </td>
+            </tr>
+
+            <!-- BALANCED HARVESTS -->
+            <tr data-cat="crop" data-status="balanced">
+              <td>
+                <div style="display:flex;align-items:center;gap:8px">
+                  <span class="cat-tag cat-crop">Crop</span>
+                  <div>
+                    <strong>Sibuyas Tagalog (Red Onions)</strong>
+                    <small style="display:block;color:var(--muted);font-size:11px">Stable pre-orders</small>
+                  </div>
+                </div>
+              </td>
+              <td>Bongabon, Nueva Ecija</td>
+              <td><strong>5.2 tons</strong></td>
+              <td>5.0 tons</td>
+              <td>
+                <span class="level-balanced">✓ Balanced (+4% Optimal)</span>
+                <small style="display:block;color:var(--green);font-size:11px;margin-top:2px">92% committed in pre-orders</small>
+              </td>
+              <td>Nov 25 &ndash; Dec 10, 2026</td>
+              <td>
+                <span class="status-pill status-active">&#10003; Already Sold to Buyers</span>
+              </td>
+            </tr>
+
+            <tr data-cat="livestock" data-status="balanced">
+              <td>
+                <div style="display:flex;align-items:center;gap:8px">
+                  <span class="cat-tag cat-livestock">Livestock</span>
+                  <div>
+                    <strong>Batangas Brahman Steer</strong>
+                    <small style="display:block;color:var(--muted);font-size:11px">Fattened 2-yr live cattle</small>
+                  </div>
+                </div>
+              </td>
+              <td>Guimba, Nueva Ecija</td>
+              <td><strong>6 heads ready</strong></td>
+              <td>5 heads demand</td>
+              <td>
+                <span class="level-balanced">✓ Balanced (+20% Buffer)</span>
+                <small style="display:block;color:var(--green);font-size:11px;margin-top:2px">Pre-arranged truck haul</small>
+              </td>
+              <td>Nov 15 &ndash; Nov 30, 2026</td>
+              <td>
+                <span class="status-pill status-active">&#10003; Pickup Truck Scheduled</span>
+              </td>
+            </tr>
+
+            <!-- ADDITIONAL COMMODITY ROWS -->
+            <tr data-cat="crop" data-status="over">
+              <td>
+                <div style="display:flex;align-items:center;gap:8px">
+                  <span class="cat-tag cat-crop">Crop</span>
+                  <div>
+                    <strong>Siling Labuyo (Bird's Eye Chili)</strong>
+                    <small style="display:block;color:var(--muted);font-size:11px">High price movement; 3-day harvest rotation</small>
+                  </div>
+                </div>
+              </td>
+              <td>Bongabon, Nueva Ecija</td>
+              <td><strong>3.8 tons</strong></td>
+              <td>1.9 tons</td>
+              <td>
+                <span class="level-over">⚠ Over-Harvest (+100% Extra)</span>
+                <small style="display:block;color:var(--red);font-size:11px;margin-top:2px">Direct hot-sauce factory matched</small>
+              </td>
+              <td>Nov 22 &ndash; Dec 8, 2026</td>
+              <td>
+                <button class="btn btn-sm btn-primary" onclick="showToast('Connected chili farmers directly to hot sauce and food factories.','success')">&#129371; Sell to Food Factory</button>
+              </td>
+            </tr>
+
+            <tr data-cat="livestock" data-status="over">
+              <td>
+                <div style="display:flex;align-items:center;gap:8px">
+                  <span class="cat-tag cat-livestock">Livestock</span>
+                  <div>
+                    <strong>Free-Range Broiler Chicken (Cobbs)</strong>
+                    <small style="display:block;color:var(--muted);font-size:11px">Weight ready for market (1.6kg avg)</small>
+                  </div>
+                </div>
+              </td>
+              <td>Talavera, Nueva Ecija</td>
+              <td><strong>2,400 heads</strong></td>
+              <td>1,200 demand</td>
+              <td>
+                <span class="level-over">⚠ Over-Harvest (+100% Extra)</span>
+                <small style="display:block;color:var(--red);font-size:11px;margin-top:2px">Freezer storage requested</small>
+              </td>
+              <td>Nov 16 &ndash; Nov 24, 2026</td>
+              <td>
+                <button class="btn btn-sm btn-secondary" onclick="showToast('Freezer slots secured to freeze chicken meat safely.','success')">&#10052; Send to Meat Freezer</button>
+              </td>
+            </tr>
+
+            <tr data-cat="eggs" data-status="low">
+              <td>
+                <div style="display:flex;align-items:center;gap:8px">
+                  <span class="cat-tag cat-eggs">Eggs</span>
+                  <div>
+                    <strong>Table Eggs (Medium Brown Grade A)</strong>
+                    <small style="display:block;color:var(--muted);font-size:11px">Feed shortage affecting egg output</small>
+                  </div>
+                </div>
+              </td>
+              <td>Science City of Muñoz</td>
+              <td><strong>6,500 pcs</strong></td>
+              <td>11,000 pcs demand</td>
+              <td>
+                <span class="level-low">📉 Low Harvest (-41% Shortage)</span>
+                <small style="display:block;color:var(--gold);font-size:11px;margin-top:2px">Supermarkets need more supply</small>
+              </td>
+              <td>Nov 19 &ndash; Dec 02, 2026</td>
+              <td>
+                <span class="status-pill status-active">&#129366; Reserve for Local Bakeries</span>
+              </td>
+            </tr>
+
+            <tr data-cat="crop" data-status="balanced">
+              <td>
+                <div style="display:flex;align-items:center;gap:8px">
+                  <span class="cat-tag cat-crop">Crop</span>
+                  <div>
+                    <strong>Mais (Sweet Yellow Corn)</strong>
+                    <small style="display:block;color:var(--muted);font-size:11px">Fresh table corn harvested weekly</small>
+                  </div>
+                </div>
+              </td>
+              <td>Guimba, Nueva Ecija</td>
+              <td><strong>14.5 tons</strong></td>
+              <td>13.8 tons</td>
+              <td>
+                <span class="level-balanced">✓ Balanced (+5% Optimal)</span>
+                <small style="display:block;color:var(--green);font-size:11px;margin-top:2px">All pre-sold to wet markets</small>
+              </td>
+              <td>Nov 10 &ndash; Nov 28, 2026</td>
+              <td>
+                <span class="status-pill status-active">&#10003; Trucks Delivering Now</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- TABLE FOOTER WITH PAGINATION -->
+      <div class="table-footer">
+        <div id="pageInfoText" style="font-size:12px;color:var(--muted)">
+          Showing 1 to 5 of 12 commodities
+        </div>
+        <div class="pagination-controls" id="paginationControls">
+          <!-- Rendered by JS -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toastEl" class="toast-notif"></div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function(){
+      var user = requireAuth(['LGU Admin']);
+      if (!user) return;
+
+      // Big Chart 1: Supply vs Demand
+      new Chart(document.getElementById('bigChartSupply'), {
+        type: 'bar',
+        data: {
+          labels: ['Kamatis (Guimba)', 'Kalabasa (Talavera)', 'Sibuyas (Bongabon)', 'Talong (San Fernando)', 'Mangga (Bulacan)', 'Native Eggs (Munoz)'],
+          datasets: [
+            {
+              label: 'Total Harvest Volume (Tons)',
+              data: [11.3, 8.9, 5.2, 3.1, 6.8, 2.4],
+              backgroundColor: 'rgba(46, 111, 64, 0.85)',
+              borderRadius: 6
+            },
+            {
+              label: 'Local Market Demand (Tons)',
+              data: [5.1, 7.2, 5.0, 3.5, 6.0, 2.8],
+              backgroundColor: 'rgba(201, 134, 26, 0.85)',
+              borderRadius: 6
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { position: 'top' } },
+          scales: { y: { beginAtZero: true, title: { display: true, text: 'Metric Tons' } } }
+        }
+      });
+
+      // Big Chart 2: Spoilage Risk
+      new Chart(document.getElementById('bigChartRisk'), {
+        type: 'doughnut',
+        data: {
+          labels: ['Kamatis (High Risk 44%)', 'Kalabasa (Moderate 26%)', 'Talong (13%)', 'Livestock & Eggs (10%)', 'Sibuyas (7%)'],
+          datasets: [{
+            data: [44, 26, 13, 10, 7],
+            backgroundColor: ['#c0392b', '#e67e22', '#f39c12', '#2980b9', '#27ae60'],
+            borderWidth: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: '58%',
+          plugins: { legend: { position: 'bottom' } }
+        }
+      });
+
+      // Big Chart 3: Farmgate Price Volatility
+      new Chart(document.getElementById('bigChartPrice'), {
+        type: 'line',
+        data: {
+          labels: ['Oct 1', 'Oct 8', 'Oct 15', 'Oct 22', 'Nov 1', 'Nov 8', 'Nov 15'],
+          datasets: [
+            {
+              label: 'Kamatis (P/kg) — Middleman Glut Price Crash',
+              data: [65, 58, 50, 42, 38, 35, 42],
+              borderColor: '#c0392b',
+              backgroundColor: 'rgba(192, 57, 43, 0.1)',
+              fill: true,
+              tension: 0.35
+            },
+            {
+              label: 'Sibuyas (P/kg) — Stable Pre-Orders Contract',
+              data: [100, 108, 115, 120, 125, 122, 120],
+              borderColor: '#27ae60',
+              backgroundColor: 'rgba(39, 174, 96, 0.08)',
+              fill: true,
+              tension: 0.35
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { position: 'bottom' } },
+          scales: { y: { beginAtZero: false, title: { display: true, text: 'Farmgate Price (PHP)' } } }
+        }
+      });
+
+      // Timeline Table Filters & Pagination
+      var activeCat = 'all';
+      var activeStatus = 'all';
+      var _currentPage = 1;
+      var _pageSize = 5;
+
+      window.goToPage = function(p) {
+        _currentPage = p;
+        applyTimelineFilters();
+      };
+
+      window.changePageSize = function(size) {
+        _pageSize = parseInt(size, 10) || 5;
+        _currentPage = 1;
+        applyTimelineFilters();
+      };
+
+      function renderPaginationControls(totalPages) {
+        var c = document.getElementById('paginationControls');
+        if (!c) return;
+
+        var h = '';
+        h += '<button class="page-btn" onclick="goToPage(' + (_currentPage - 1) + ')" ' + (_currentPage === 1 ? 'disabled' : '') + '>&larr; Prev</button>';
+
+        for (var i = 1; i <= totalPages; i++) {
+          if (totalPages <= 7 || i === 1 || i === totalPages || (i >= _currentPage - 1 && i <= _currentPage + 1)) {
+            h += '<button class="page-btn ' + (i === _currentPage ? 'active' : '') + '" onclick="goToPage(' + i + ')">' + i + '</button>';
+          } else if (i === _currentPage - 2 || i === _currentPage + 2) {
+            h += '<span style="padding:0 4px;color:var(--muted)">...</span>';
+          }
+        }
+
+        h += '<button class="page-btn" onclick="goToPage(' + (_currentPage + 1) + ')" ' + (_currentPage >= totalPages ? 'disabled' : '') + '>Next &rarr;</button>';
+        c.innerHTML = h;
+      }
+
+      function applyTimelineFilters() {
+        var rows = Array.from(document.querySelectorAll('#harvestTimelineTable tbody tr'));
+        
+        // Match against active category & status
+        var matchedRows = rows.filter(function(r){
+          var cat = r.getAttribute('data-cat');
+          var status = r.getAttribute('data-status');
+          var matchCat = (activeCat === 'all' || cat === activeCat);
+          var matchStatus = (activeStatus === 'all' || status === activeStatus);
+          return matchCat && matchStatus;
+        });
+
+        var totalItems = matchedRows.length;
+        var totalPages = Math.max(1, Math.ceil(totalItems / _pageSize));
+        if (_currentPage > totalPages) _currentPage = totalPages;
+
+        var startIndex = (_currentPage - 1) * _pageSize;
+        var endIndex = startIndex + _pageSize;
+
+        // Hide all rows first
+        rows.forEach(function(r){ r.style.display = 'none'; });
+
+        // Show only current page rows
+        matchedRows.slice(startIndex, endIndex).forEach(function(r){
+          r.style.display = '';
+        });
+
+        // Update info text
+        var info = document.getElementById('pageInfoText');
+        if (info) {
+          if (totalItems === 0) {
+            info.textContent = 'No matching commodities found';
+          } else {
+            var actualEnd = Math.min(endIndex, totalItems);
+            info.textContent = 'Showing ' + (startIndex + 1) + ' to ' + actualEnd + ' of ' + totalItems + ' commodities';
+          }
+        }
+
+        renderPaginationControls(totalPages);
+      }
+
+      document.querySelectorAll('#catFilterGroup .t-filter-btn').forEach(function(btn){
+        btn.addEventListener('click', function(){
+          document.querySelectorAll('#catFilterGroup .t-filter-btn').forEach(function(b){ b.classList.remove('active'); });
+          btn.classList.add('active');
+          activeCat = btn.getAttribute('data-cat');
+          _currentPage = 1;
+          applyTimelineFilters();
+        });
+      });
+
+      document.querySelectorAll('#statusFilterGroup .t-filter-btn').forEach(function(btn){
+        btn.addEventListener('click', function(){
+          document.querySelectorAll('#statusFilterGroup .t-filter-btn').forEach(function(b){ b.classList.remove('active'); });
+          btn.classList.add('active');
+          activeStatus = btn.getAttribute('data-status');
+          _currentPage = 1;
+          applyTimelineFilters();
+        });
+      });
+
+      // Initial run
+      applyTimelineFilters();
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,1026 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>A.N.I.H.A.N. — Agricultural Network for Innovative Harvest Allocation & Navigation</title>
+  <meta name="description" content="A web-based agricultural coordination platform connecting Filipino farmers, agricultural workers, and local buyers through a centralized harvest marketplace.">
+  <link rel="stylesheet" href="styles.css">
+  <script src="app.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+  <script src="https://assets.codepen.io/16327/MorphSVGPlugin3.min.js"></script>
+  <style>
+    body{background:#fff}
+    /* LANDING NAV */
+    .land-nav{position:fixed;top:0;left:0;right:0;z-index:100;transition:all .3s}
+    .land-nav.scrolled{background:rgba(255,255,255,.97);border-bottom:1px solid var(--border);box-shadow:var(--shadow-s)}
+    .land-nav-inner{max-width:1280px;margin:0 auto;padding:0 32px;height:72px;display:flex;align-items:center;justify-content:space-between}
+    .land-brand{display:flex;align-items:center;gap:10px}
+    .land-brand-mark{width:42px;height:42px;background:var(--white);border-radius:11px;display:grid;place-items:center}
+    .land-brand-mark svg{width:26px;height:26px}
+    .land-brand-text strong{display:block;font-size:15px;font-weight:800;color:#fff;letter-spacing:.01em}
+    .land-brand-text small{display:block;font-size:9px;letter-spacing:.12em;color:rgba(255,255,255,.75);font-weight:600}
+    .land-nav.scrolled .land-brand-text strong{color:var(--green)}
+    .land-nav.scrolled .land-brand-text small{color:var(--muted)}
+    .land-nav.scrolled .land-brand-mark{background:var(--green)}
+    .land-nav.scrolled .land-brand-mark svg{color:#fff}
+    .land-brand-mark svg{color:var(--green)}
+    .land-nav-actions{display:flex;gap:10px;align-items:center}
+    .btn-land-login{border:1.5px solid rgba(255,255,255,.7);border-radius:8px;padding:8px 18px;font-size:13px;font-weight:600;color:#fff;background:transparent;cursor:pointer;transition:all .2s}
+    .btn-land-login:hover{background:rgba(255,255,255,.15)}
+    .land-nav.scrolled .btn-land-login{border-color:var(--border);color:var(--ink2)}
+    .land-nav.scrolled .btn-land-login:hover{background:var(--cream)}
+    .btn-land-join{border:0;border-radius:8px;padding:9px 20px;font-size:13px;font-weight:700;background:var(--gold);color:#fff;cursor:pointer;transition:all .2s}
+    .btn-land-join:hover{background:#a86e10;transform:translateY(-1px)}
+    /* HERO */
+    .hero{min-height:100vh;display:flex;flex-direction:column;justify-content:center;position:relative;overflow:hidden}
+    .hero-bg{position:absolute;inset:0;background-image:url('https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=1920&q=80');background-size:cover;background-position:center;z-index:0}
+    .hero-overlay{position:absolute;inset:0;background:linear-gradient(135deg,rgba(14,38,20,.82) 0%,rgba(30,70,40,.65) 60%,rgba(14,38,20,.5) 100%);z-index:1}
+    .hero-content{position:relative;z-index:2;max-width:1280px;margin:0 auto;padding:120px 32px 80px;display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center}
+    .hero-copy{}
+    .hero-eyebrow{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:20px;padding:6px 14px;font-size:11px;font-weight:700;color:rgba(255,255,255,.9);letter-spacing:.1em;text-transform:uppercase;margin-bottom:20px}
+    .hero-h1{font-size:52px;font-weight:800;color:#fff;line-height:1.1;margin-bottom:20px}
+    .hero-h1 span{color:#f0c060}
+    .hero-desc{font-size:16px;color:rgba(255,255,255,.85);line-height:1.7;margin-bottom:32px;max-width:500px}
+    .hero-cta{display:flex;gap:12px;flex-wrap:wrap}
+    .hero-stats{display:flex;gap:32px;margin-top:40px;flex-wrap:wrap}
+    .hero-stat-item{}
+    .hero-stat-item strong{display:block;font-size:28px;font-weight:800;color:#fff}
+    .hero-stat-item small{font-size:12px;color:rgba(255,255,255,.7);font-weight:500}
+    /* Hero right cards */
+    .hero-cards{display:flex;flex-direction:column;gap:14px}
+    .hero-card{background:rgba(255,255,255,.1);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.2);border-radius:14px;padding:18px;color:#fff}
+    .hero-card-label{font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;opacity:.7;margin-bottom:8px}
+    .hero-card-title{font-size:14px;font-weight:700;margin-bottom:4px}
+    .hero-card-sub{font-size:12px;opacity:.75}
+    .hero-card-badges{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+    .hc-badge{border-radius:20px;padding:3px 10px;font-size:10px;font-weight:700}
+    .hc-g{background:rgba(100,200,120,.25);color:#a0edb0;border:1px solid rgba(100,200,120,.3)}
+    .hc-b{background:rgba(100,160,255,.2);color:#a0c8ff;border:1px solid rgba(100,160,255,.25)}
+    /* SECTIONS */
+    section{padding:80px 0}
+    .section-wrap{max-width:1280px;margin:0 auto;padding:0 32px}
+    .section-head{text-align:center;margin-bottom:52px}
+    .section-head .eyebrow{color:var(--green);margin-bottom:12px}
+    .section-head h2{font-size:36px;font-weight:800;margin-bottom:14px;color:var(--ink)}
+    .section-head p{font-size:16px;color:var(--muted);max-width:600px;margin:0 auto;line-height:1.7}
+    /* OBJECTIVE SECTION */
+    .obj-section{background:var(--cream)}
+    .obj-box{background:var(--white);border-radius:16px;border:1px solid var(--border);box-shadow:var(--shadow-m);overflow:hidden}
+    .obj-header{background:linear-gradient(135deg,var(--green-dk),var(--green-lt));padding:32px 40px;color:#fff}
+    .obj-header h3{font-size:22px;font-weight:800;margin-bottom:8px}
+    .obj-header p{font-size:15px;opacity:.9;line-height:1.65}
+    .obj-body{padding:32px 40px}
+    .obj-list{list-style:none;display:flex;flex-direction:column;gap:16px}
+    .obj-item{display:flex;gap:16px;align-items:flex-start}
+    .obj-num{width:36px;height:36px;border-radius:50%;background:var(--green-soft);color:var(--green);display:grid;place-items:center;font-size:12px;font-weight:800;flex-shrink:0;margin-top:2px}
+    .obj-item strong{display:block;font-size:14px;font-weight:700;margin-bottom:4px}
+    .obj-item p{font-size:13px;color:var(--muted);line-height:1.6}
+    /* USER CARDS */
+    .users-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:24px}
+    .user-card{border-radius:16px;border:1px solid var(--border);box-shadow:var(--shadow-s);overflow:hidden;background:var(--white);transition:all .2s}
+    .user-card:hover{box-shadow:var(--shadow-m);transform:translateY(-3px)}
+    .user-card-photo{height:200px;object-fit:cover;width:100%}
+    .user-card-body{padding:22px}
+    .user-card-body .role-label{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--green);margin-bottom:8px}
+    .user-card-body h3{font-size:18px;font-weight:800;margin-bottom:10px}
+    .user-card-body p{font-size:13px;color:var(--muted);line-height:1.65}
+    .user-card-body .login-role-btn{margin-top:16px;width:100%}
+    /* HOW IT WORKS */
+    .hiw-section{background:#fff}
+    .hiw-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:32px}
+    .hiw-step{text-align:center;padding:32px 24px}
+    .hiw-num{width:52px;height:52px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font-size:20px;font-weight:800;margin:0 auto 18px}
+    .hiw-step h3{font-size:17px;font-weight:700;margin-bottom:10px}
+    .hiw-step p{font-size:13px;color:var(--muted);line-height:1.7}
+    /* CTA SECTION */
+    .cta-section{background:linear-gradient(135deg,var(--green-dk),var(--green-lt));padding:80px 0;text-align:center}
+    .cta-section h2{font-size:36px;font-weight:800;color:#fff;margin-bottom:14px}
+    .cta-section p{font-size:16px;color:rgba(255,255,255,.85);margin-bottom:32px;max-width:520px;margin-left:auto;margin-right:auto}
+    /* FOOTER */
+    footer{background:var(--ink);color:rgba(255,255,255,.75);padding:32px;text-align:center;font-size:13px}
+    footer strong{color:#fff}
+    /* MODAL - AUTH */
+    .auth-tabs{display:grid;grid-template-columns:1fr 1fr;background:var(--cream);border-radius:8px;padding:4px;margin-bottom:20px}
+    .auth-tab{border:0;background:transparent;padding:9px;font-size:13px;font-weight:600;color:var(--muted);border-radius:6px;cursor:pointer;transition:all .18s}
+    .auth-tab.active{background:#fff;color:var(--green);box-shadow:0 1px 4px rgba(0,0,0,.08)}
+    .role-picker{display:grid;grid-template-columns:repeat(auto-fit,minmax(85px,1fr));gap:8px;margin-bottom:16px}
+    .role-choice{border:1.5px solid var(--border);border-radius:8px;padding:12px 6px;text-align:center;cursor:pointer;transition:all .18s;position:relative}
+    .role-choice input{position:absolute;opacity:0;width:0;height:0}
+    .role-choice svg{width:24px;height:24px;display:block;margin:0 auto 6px;color:var(--muted)}
+    .role-choice strong{display:block;font-size:11px;font-weight:700;color:var(--muted);white-space:nowrap}
+    .role-choice.active{border-color:var(--green);background:var(--green-soft)}
+    /* YETI ANIMATION */
+    .yeti-container{position:relative;width:130px;height:130px;margin:0 auto 12px;border-radius:50%;pointer-events:none;flex-shrink:0}
+    .yeti-container>div{position:relative;width:100%;height:0;overflow:hidden;border-radius:50%;padding-bottom:100%}
+    .yeti-container .mySVG{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none}
+    .yeti-container::after{content:"";position:absolute;top:0;left:0;z-index:10;width:100%;height:100%;box-sizing:border-box;border:2.5px solid var(--green);border-radius:50%}
+    #authModal .modal-box{max-width:480px !important}
+    #authModal .modal-body{padding-top:10px}
+    .yeti-show-pw-toggle{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);margin-top:10px;margin-bottom:8px;cursor:pointer;user-select:none}
+    .yeti-show-pw-toggle input{width:14px;height:14px;accent-color:var(--green);cursor:pointer}
+    .role-choice.active svg,.role-choice.active strong{color:var(--green)}
+    #regBlock{display:none}
+    @media(max-width:900px){
+      .hero-content{grid-template-columns:1fr;padding:100px 20px 60px}
+      .hero-cards{display:none}
+      .hero-h1{font-size:36px}
+      .users-grid,.hiw-grid{grid-template-columns:1fr}
+      .section-wrap{padding:0 20px}
+      .land-nav-inner{padding:0 20px}
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav class="land-nav" id="landNav">
+    <div class="land-nav-inner">
+      <a href="index.html" class="land-brand">
+        <div class="land-brand-mark">
+          <svg viewBox="0 0 48 48" fill="none">
+            <path d="M24 40V18" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+            <path d="M24 27c-9 0-14-4-14-11 8 0 13 3 14 11Z" fill="#EAA023"/>
+            <path d="M24 20c1-8 6-12 14-12 0 7-5 12-14 12Z" fill="currentColor"/>
+            <path d="M24 34c-7 0-11-3-11-9 6 0 10 3 11 9Z" fill="currentColor" opacity=".6"/>
+          </svg>
+        </div>
+        <div class="land-brand-text">
+          <strong>A.N.I.H.A.N.</strong>
+          <small>Harvests &amp; Livestock Connected</small>
+        </div>
+      </a>
+      <div class="land-nav-actions">
+        <button class="btn-land-login" id="openLoginBtn">Log in</button>
+        <button class="btn-land-join" id="openRegBtn">Registration</button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+      <div class="hero-copy">
+        <div class="hero-eyebrow">Central Luzon Agricultural Network</div>
+        <h1 class="hero-h1">Good food.<br>Fairer prices.<br><span>Connected harvests.</span></h1>
+        <p class="hero-desc">A.N.I.H.A.N. connects Filipino farmers, livestock growers, and local buyers through a centralized harvest marketplace — eliminating middlemen and preventing post-harvest waste.</p>
+        <div class="hero-cta">
+          <button class="btn btn-lg" style="background:#f0c060;color:#3a2800;font-weight:800" id="heroJoinBtn">Registration</button>
+          <button class="btn btn-lg" style="background:rgba(255,255,255,.15);color:#fff;border:1.5px solid rgba(255,255,255,.4)" onclick="document.getElementById('objectives').scrollIntoView({behavior:'smooth'})">View Objectives</button>
+        </div>
+        <div class="hero-stats">
+          <div class="hero-stat-item"><strong>1,450+</strong><small>Registered farmers &amp; buyers</small></div>
+          <div class="hero-stat-item"><strong>5 Provinces</strong><small>Central Luzon coverage</small></div>
+          <div class="hero-stat-item"><strong>Zero</strong><small>Hidden middlemen</small></div>
+        </div>
+      </div>
+      <div class="hero-cards">
+        <div class="hero-card">
+          <div class="hero-card-label">Active Harvest Listing</div>
+          <div class="hero-card-title">Kamatis (Diamante Max) — Guimba, NE</div>
+          <div class="hero-card-sub">Ready: Nov 18–26, 2026 · P42 / kg · 740 kg available</div>
+          <div class="hero-card-badges">
+            <span class="hc-badge hc-g">Pick-up Available</span>
+            <span class="hc-badge hc-b">Delivery</span>
+          </div>
+        </div>
+        <div class="hero-card">
+          <div class="hero-card-label">Livestock Available</div>
+          <div class="hero-card-title">Batangas Brahman Cattle — 380kg · 2 heads</div>
+          <div class="hero-card-sub">Vaccinated &amp; certified · P42,000 / head</div>
+          <div class="hero-card-badges">
+            <span class="hc-badge hc-g">Vaccinated</span>
+          </div>
+        </div>
+        <div class="hero-card">
+          <div class="hero-card-label">Eggs &amp; Poultry</div>
+          <div class="hero-card-title">Native Chicken Eggs — Munoz, NE</div>
+          <div class="hero-card-sub">Free-range · P180 / tray · 145 trays available</div>
+          <div class="hero-card-badges">
+            <span class="hc-badge hc-g">Free Range</span>
+            <span class="hc-badge hc-b">Delivery Within 50km</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- OBJECTIVES -->
+  <section class="obj-section" id="objectives">
+    <div class="section-wrap">
+      <div class="section-head">
+        <div class="eyebrow">Research Objectives</div>
+        <h2>Project Objectives of A.N.I.H.A.N.</h2>
+        <p>Grounded in the realities of Filipino agriculture, this platform was designed to address systemic challenges in the local produce supply chain.</p>
+      </div>
+      <div class="obj-box">
+        <div class="obj-header">
+          <h3>General Objective</h3>
+          <p>To design and develop a web-based agricultural coordination platform — A.N.I.H.A.N. — that streamlines the local produce supply chain by connecting farmers, agricultural workers, and local buyers through a centralized harvest timeline calendar and direct pre-ordering system.</p>
+        </div>
+        <div class="obj-body">
+          <ul class="obj-list">
+            <li class="obj-item"><span class="obj-num">01</span><div><strong>Eliminate Post-Harvest Spoilage and Glut Crashes</strong><p>Enable advance pre-orders so farmers secure committed buyers before harvesting, preventing rotting crops and distress farmgate price dumping in the local market.</p></div></li>
+            <li class="obj-item"><span class="obj-num">02</span><div><strong>Guarantee Fair and Direct Farmgate Pricing</strong><p>Bypass predatory middleman layers by connecting growers directly with buyers — for crops, livestock, poultry, and eggs — with transparent negotiated contracts and open market rates.</p></div></li>
+            <li class="obj-item"><span class="obj-num">03</span><div><strong>Inclusive Platform for All Farmers, Including Non-Literate Growers</strong><p>Agricultural Extension Workers register accounts on behalf of farmers who cannot read or write, ensuring zero exclusion from the digital marketplace.</p></div></li>
+            <li class="obj-item"><span class="obj-num">04</span><div><strong>Actionable Municipal Market Interventions</strong><p>Aggregate planting data into 3 predictive graphs, alerting LGUs and Ag Workers of impending over-harvests so they can trigger Kadiwa market dispatch, cold storage, or flash sales before produce is wasted.</p></div></li>
+            <li class="obj-item"><span class="obj-num">05</span><div><strong>Full Fulfillment Transparency for Crops and Livestock</strong><p>Provide explicit Pick-up and Delivery options for every listing — whether fresh vegetables, live cattle, native chicken, duck eggs, or native pigs — with a 5-step Shopee-style order tracking system.</p></div></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- WHO IS IT FOR -->
+  <section class="hiw-section" id="users" style="background:var(--cream)">
+    <div class="section-wrap">
+      <div class="section-head">
+        <div class="eyebrow">Target Users</div>
+        <h2>Who Uses A.N.I.H.A.N.?</h2>
+        <p>Three distinct user roles, each with a dedicated interface and purpose within the agricultural coordination ecosystem.</p>
+      </div>
+      <div class="users-grid">
+        <div class="user-card">
+          <img class="user-card-photo" src="https://images.unsplash.com/photo-1595211877493-41a4e5f236b3?w=600&q=80" alt="Farmer" loading="lazy">
+          <div class="user-card-body">
+            <div class="role-label">Farmer / Grower</div>
+            <h3>Magsasaka — Sell Your Harvest</h3>
+            <p>List your crops, livestock (cattle, pigs, goats, chicken), and eggs with pick-up or delivery options. Receive pre-orders from verified buyers and track each order through the 5-step fulfillment system.</p>
+            <button class="btn btn-primary login-role-btn" data-role="Farmer" onclick="openRoleLogin('Farmer')">Log in as Farmer</button>
+          </div>
+        </div>
+        <div class="user-card">
+          <img class="user-card-photo" src="https://images.unsplash.com/photo-1542838132-92c53300491e?w=600&q=80" alt="Buyer at market" loading="lazy">
+          <div class="user-card-body">
+            <div class="role-label">Buyer / Vendor</div>
+            <h3>Mamimili — Pre-Order Fresh Produce</h3>
+            <p>Browse certified crops, live animals, and farm eggs directly from Central Luzon growers. Pre-order with your preferred fulfillment mode and track delivery or pick-up status in real time.</p>
+            <button class="btn btn-primary login-role-btn" data-role="Buyer" onclick="openRoleLogin('Buyer')">Log in as Buyer</button>
+          </div>
+        </div>
+        <div class="user-card">
+          <img class="user-card-photo" src="https://images.unsplash.com/photo-1607748862156-7c548e7e98f4?w=600&q=80" alt="Agricultural Worker" loading="lazy">
+          <div class="user-card-body">
+            <div class="role-label">Barangay Ag Worker</div>
+            <h3>Manggagawa — Low-Tech Assistance</h3>
+            <p>Assists farmers with low technology literacy to register accounts, access them via secure Pass Code, list harvests/livestock on their behalf, and track their distribution.</p>
+            <button class="btn btn-primary login-role-btn" data-role="Ag Worker" onclick="openRoleLogin('Ag Worker')">Log in as Ag Worker</button>
+          </div>
+        </div>
+        <div class="user-card" style="border-top:4px solid var(--green)">
+          <img class="user-card-photo" src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&q=80" alt="LGU Municipal Agriculture Administrator" loading="lazy">
+          <div class="user-card-body">
+            <div class="role-label" style="color:var(--green)">LGU Agriculture Office</div>
+            <h3>LGU Admin — Municipal Surveillance</h3>
+            <p>Manage all accounts with search &amp; filter, approve/disapprove &amp; edit credentials, monitor 3 predictive Over-Harvest graphs, and supervise municipal-wide distribution.</p>
+            <button class="btn btn-primary login-role-btn" data-role="LGU Admin" onclick="openRoleLogin('LGU Admin', false)">Log in as LGU Admin</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section id="how-it-works" style="background:#fff;padding:80px 0">
+    <div class="section-wrap">
+      <div class="section-head">
+        <div class="eyebrow">Platform Workflow</div>
+        <h2>How A.N.I.H.A.N. Works</h2>
+        <p>From farm to table — a simple, transparent three-step process.</p>
+      </div>
+      <div class="hiw-grid">
+        <div class="hiw-step">
+          <div class="hiw-num">1</div>
+          <h3>Farmers Post Their Harvest</h3>
+          <p>Growers register their crops, livestock, and eggs with price, available quantity, fulfillment mode (pick-up or delivery), and harvest readiness dates. Photos and ratings build buyer trust.</p>
+        </div>
+        <div class="hiw-step">
+          <div class="hiw-num">2</div>
+          <h3>Buyers Browse and Pre-Order</h3>
+          <p>Verified buyers explore the marketplace, filter by category, rate and review produce, and place pre-orders directly from the grower — no middlemen, no hidden fees.</p>
+        </div>
+        <div class="hiw-step">
+          <div class="hiw-num">3</div>
+          <h3>Fulfill and Track Every Order</h3>
+          <p>Both farmer and buyer track every order through 5 transparent steps — from confirmation and harvest to transit, delivery, and final handover — just like a modern logistics platform.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="cta-section">
+    <div class="section-wrap">
+      <h2>Ready to Register on the Network?</h2>
+      <p>Whether you are a farmer, a buyer, or a barangay agricultural worker — A.N.I.H.A.N. has a dedicated space for you.</p>
+      <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap">
+        <button class="btn btn-lg" style="background:#f0c060;color:#3a2800;font-weight:800" onclick="openRoleLogin('Farmer', true)">Register as Farmer</button>
+        <button class="btn btn-lg" style="background:rgba(255,255,255,.15);color:#fff;border:1.5px solid rgba(255,255,255,.4)" onclick="openRoleLogin('Buyer', true)">Register as Buyer</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <strong>A.N.I.H.A.N.</strong> — Agricultural Network for Innovative Harvest Allocation &amp; Navigation<br>
+    <span style="margin-top:6px;display:block">Rooted in community. Built for farmers, buyers, and local agriculture offices. &copy; 2026 Republic of the Philippines.</span>
+  </footer>
+
+  <!-- AUTH MODAL -->
+  <div class="modal-backdrop hidden" id="authModal">
+    <div class="modal-box" style="max-width:480px">
+      <div class="modal-head">
+        <h2 id="authModalTitle">Log in to Your Account</h2>
+        <button class="modal-close" data-close-modal>&times;</button>
+      </div>
+      <div class="modal-body">
+        <!-- Yeti SVG character -->
+        <div class="yeti-container" id="yetiContainer">
+          <div>
+            <svg class="mySVG" id="yetiSVG" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 200 200">
+              <defs><circle id="armMaskPath" cx="100" cy="100" r="100"/></defs>
+              <clipPath id="armMask"><use xlink:href="#armMaskPath" overflow="visible"/></clipPath>
+              <circle cx="100" cy="100" r="100" fill="#a9ddf3"/>
+              <g class="yeti-body">
+                <path class="yeti-bodyBGchanged" style="display:none" fill="#FFFFFF" d="M200,122h-35h-14.9V72c0-27.6-22.4-50-50-50s-50,22.4-50,50v50H35.8H0l0,91h200L200,122z"/>
+                <path class="yeti-bodyBGnormal" stroke="#3A5E77" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="#FFFFFF" d="M200,158.5c0-20.2-14.8-36.5-35-36.5h-14.9V72.8c0-27.4-21.7-50.4-49.1-50.8c-28-0.5-50.9,22.1-50.9,50v50 H35.8C16,122,0,138,0,157.8L0,213h200L200,158.5z"/>
+                <path fill="#DDF1FA" d="M100,156.4c-22.9,0-43,11.1-54.1,27.7c15.6,10,34.2,15.9,54.1,15.9s38.5-5.8,54.1-15.9 C143,167.5,122.9,156.4,100,156.4z"/>
+              </g>
+              <g class="yeti-earL">
+                <g class="yeti-outerEarL" fill="#ddf1fa" stroke="#3a5e77" stroke-width="2.5">
+                  <circle cx="47" cy="83" r="11.5"/>
+                  <path d="M46.3 78.9c-2.3 0-4.1 1.9-4.1 4.1 0 2.3 1.9 4.1 4.1 4.1" stroke-linecap="round" stroke-linejoin="round"/>
+                </g>
+                <g class="yeti-earHairL">
+                  <rect x="51" y="64" fill="#FFFFFF" width="15" height="35"/>
+                  <path d="M53.4 62.8C48.5 67.4 45 72.2 42.8 77c3.4-.1 6.8-.1 10.1.1-4 3.7-6.8 7.6-8.2 11.6 2.1 0 4.2 0 6.3.2-2.6 4.1-3.8 8.3-3.7 12.5 1.2-.7 3.4-1.4 5.2-1.9" fill="#fff" stroke="#3a5e77" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </g>
+              </g>
+              <g class="yeti-earR">
+                <g class="yeti-outerEarR">
+                  <circle fill="#DDF1FA" stroke="#3A5E77" stroke-width="2.5" cx="153" cy="83" r="11.5"/>
+                  <path fill="#DDF1FA" stroke="#3A5E77" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" d="M153.7,78.9 c2.3,0,4.1,1.9,4.1,4.1c0,2.3-1.9,4.1-4.1,4.1"/>
+                </g>
+                <g class="yeti-earHairR">
+                  <rect x="134" y="64" fill="#FFFFFF" width="15" height="35"/>
+                  <path fill="#FFFFFF" stroke="#3A5E77" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" d="M146.6,62.8 c4.9,4.6,8.4,9.4,10.6,14.2c-3.4-0.1-6.8-0.1-10.1,0.1c4,3.7,6.8,7.6,8.2,11.6c-2.1,0-4.2,0-6.3,0.2c2.6,4.1,3.8,8.3,3.7,12.5 c-1.2-0.7-3.4-1.4-5.2-1.9"/>
+                </g>
+              </g>
+              <path class="yeti-chin" d="M84.1 121.6c2.7 2.9 6.1 5.4 9.8 7.5l.9-4.5c2.9 2.5 6.3 4.8 10.2 6.5 0-1.9-.1-3.9-.2-5.8 3 1.2 6.2 2 9.7 2.5-.3-2.1-.7-4.1-1.2-6.1" fill="none" stroke="#3a5e77" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+              <path class="yeti-face" fill="#DDF1FA" d="M134.5,46v35.5c0,21.815-15.446,39.5-34.5,39.5s-34.5-17.685-34.5-39.5V46"/>
+              <path class="yeti-hair" fill="#FFFFFF" stroke="#3A5E77" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" d="M81.457,27.929 c1.755-4.084,5.51-8.262,11.253-11.77c0.979,2.565,1.883,5.14,2.712,7.723c3.162-4.265,8.626-8.27,16.272-11.235 c-0.737,3.293-1.588,6.573-2.554,9.837c4.857-2.116,11.049-3.64,18.428-4.156c-2.403,3.23-5.021,6.391-7.852,9.474"/>
+              <g class="yeti-eyebrow">
+                <path fill="#FFFFFF" d="M138.142,55.064c-4.93,1.259-9.874,2.118-14.787,2.599c-0.336,3.341-0.776,6.689-1.322,10.037 c-4.569-1.465-8.909-3.222-12.996-5.226c-0.98,3.075-2.07,6.137-3.267,9.179c-5.514-3.067-10.559-6.545-15.097-10.329 c-1.806,2.889-3.745,5.73-5.816,8.515c-7.916-4.124-15.053-9.114-21.296-14.738l1.107-11.768h73.475V55.064z"/>
+                <path fill="#FFFFFF" stroke="#3A5E77" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" d="M63.56,55.102 c6.243,5.624,13.38,10.614,21.296,14.738c2.071-2.785,4.01-5.626,5.816-8.515c4.537,3.785,9.583,7.263,15.097,10.329 c1.197-3.043,2.287-6.104,3.267-9.179c4.087,2.004,8.427,3.761,12.996,5.226c0.545-3.348,0.986-6.696,1.322-10.037 c4.913-0.481,9.857-1.34,14.787-2.599"/>
+              </g>
+              <g class="yeti-eyeL">
+                <circle cx="85.5" cy="78.5" r="3.5" fill="#3a5e77"/>
+                <circle cx="84" cy="76" r="1" fill="#fff"/>
+              </g>
+              <g class="yeti-eyeR">
+                <circle cx="114.5" cy="78.5" r="3.5" fill="#3a5e77"/>
+                <circle cx="113" cy="76" r="1" fill="#fff"/>
+              </g>
+              <g class="yeti-mouth">
+                <path class="yeti-mouthBG" fill="#617E92" d="M100.2,101c-0.4,0-1.4,0-1.8,0c-2.7-0.3-5.3-1.1-8-2.5c-0.7-0.3-0.9-1.2-0.6-1.8 c0.2-0.5,0.7-0.7,1.2-0.7c0.2,0,0.5,0.1,0.6,0.2c3,1.5,5.8,2.3,8.6,2.3s5.7-0.7,8.6-2.3c0.2-0.1,0.4-0.2,0.6-0.2 c0.5,0,1,0.3,1.2,0.7c0.4,0.7,0.1,1.5-0.6,1.9c-2.6,1.4-5.3,2.2-7.9,2.5C101.7,101,100.5,101,100.2,101z"/>
+                <path style="display:none" class="yeti-mouthSmallBG" fill="#617E92" d="M100.2,101c-0.4,0-1.4,0-1.8,0c-2.7-0.3-5.3-1.1-8-2.5c-0.7-0.3-0.9-1.2-0.6-1.8 c0.2-0.5,0.7-0.7,1.2-0.7c0.2,0,0.5,0.1,0.6,0.2c3,1.5,5.8,2.3,8.6,2.3s5.7-0.7,8.6-2.3c0.2-0.1,0.4-0.2,0.6-0.2 c0.5,0,1,0.3,1.2,0.7c0.4,0.7,0.1,1.5-0.6,1.9c-2.6,1.4-5.3,2.2-7.9,2.5C101.7,101,100.5,101,100.2,101z"/>
+                <path style="display:none" class="yeti-mouthMediumBG" d="M95,104.2c-4.5,0-8.2-3.7-8.2-8.2v-2c0-1.2,1-2.2,2.2-2.2h22c1.2,0,2.2,1,2.2,2.2v2 c0,4.5-3.7,8.2-8.2,8.2H95z"/>
+                <path style="display:none" class="yeti-mouthLargeBG" d="M100 110.2c-9 0-16.2-7.3-16.2-16.2 0-2.3 1.9-4.2 4.2-4.2h24c2.3 0 4.2 1.9 4.2 4.2 0 9-7.2 16.2-16.2 16.2z" fill="#617e92" stroke="#3a5e77" stroke-linejoin="round" stroke-width="2.5"/>
+                <defs>
+                  <path id="yetiMouthMaskPath" d="M100.2,101c-0.4,0-1.4,0-1.8,0c-2.7-0.3-5.3-1.1-8-2.5c-0.7-0.3-0.9-1.2-0.6-1.8 c0.2-0.5,0.7-0.7,1.2-0.7c0.2,0,0.5,0.1,0.6,0.2c3,1.5,5.8,2.3,8.6,2.3s5.7-0.7,8.6-2.3c0.2-0.1,0.4-0.2,0.6-0.2 c0.5,0,1,0.3,1.2,0.7c0.4,0.7,0.1,1.5-0.6,1.9c-2.6,1.4-5.3,2.2-7.9,2.5C101.7,101,100.5,101,100.2,101z"/>
+                </defs>
+                <clipPath id="yetiMouthMask"><use xlink:href="#yetiMouthMaskPath" overflow="visible"/></clipPath>
+                <g clip-path="url(#yetiMouthMask)">
+                  <g class="yeti-tongue">
+                    <circle cx="100" cy="107" r="8" fill="#cc4a6c"/>
+                    <ellipse cx="100" cy="100.5" rx="3" ry="1.5" opacity=".1" fill="#fff"/>
+                  </g>
+                </g>
+                <path clip-path="url(#yetiMouthMask)" class="yeti-tooth" style="fill:#FFFFFF" d="M106,97h-4c-1.1,0-2-0.9-2-2v-2h8v2C108,96.1,107.1,97,106,97z"/>
+                <path class="yeti-mouthOutline" fill="none" stroke="#3A5E77" stroke-width="2.5" stroke-linejoin="round" d="M100.2,101c-0.4,0-1.4,0-1.8,0c-2.7-0.3-5.3-1.1-8-2.5c-0.7-0.3-0.9-1.2-0.6-1.8 c0.2-0.5,0.7-0.7,1.2-0.7c0.2,0,0.5,0.1,0.6,0.2c3,1.5,5.8,2.3,8.6,2.3s5.7-0.7,8.6-2.3c0.2-0.1,0.4-0.2,0.6-0.2 c0.5,0,1,0.3,1.2,0.7c0.4,0.7,0.1,1.5-0.6,1.9c-2.6,1.4-5.3,2.2-7.9,2.5C101.7,101,100.5,101,100.2,101z"/>
+              </g>
+              <path class="yeti-nose" d="M97.7 79.9h4.7c1.9 0 3 2.2 1.9 3.7l-2.3 3.3c-.9 1.3-2.9 1.3-3.8 0l-2.3-3.3c-1.3-1.6-.2-3.7 1.8-3.7z" fill="#3a5e77"/>
+              <g class="yeti-arms" clip-path="url(#armMask)">
+                <g class="yeti-armL" style="visibility:hidden">
+                  <polygon fill="#DDF1FA" stroke="#3A5E77" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" points="121.3,98.4 111,59.7 149.8,49.3 169.8,85.4"/>
+                  <path fill="#DDF1FA" stroke="#3A5E77" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" d="M134.4,53.5l19.3-5.2c2.7-0.7,5.4,0.9,6.1,3.5v0c0.7,2.7-0.9,5.4-3.5,6.1l-10.3,2.8"/>
+                  <path fill="#DDF1FA" stroke="#3A5E77" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" d="M150.9,59.4l26-7c2.7-0.7,5.4,0.9,6.1,3.5v0c0.7,2.7-0.9,5.4-3.5,6.1l-21.3,5.7"/>
+                  <g class="yeti-twoFingers">
+                    <path fill="#DDF1FA" stroke="#3A5E77" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" d="M158.3,67.8l23.1-6.2c2.7-0.7,5.4,0.9,6.1,3.5v0c0.7,2.7-0.9,5.4-3.5,6.1l-23.1,6.2"/>
+                    <path fill="#A9DDF3" d="M180.1,65l2.2-0.6c1.1-0.3,2.2,0.3,2.4,1.4v0c0.3,1.1-0.3,2.2-1.4,2.4l-2.2,0.6L180.1,65z"/>
+                    <path fill="#DDF1FA" stroke="#3A5E77" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" d="M160.8,77.5l19.4-5.2c2.7-0.7,5.4,0.9,6.1,3.5v0c0.7,2.7-0.9,5.4-3.5,6.1l-18.3,4.9"/>
+                    <path fill="#A9DDF3" d="M178.8,75.7l2.2-0.6c1.1-0.3,2.2,0.3,2.4,1.4v0c0.3,1.1-0.3,2.2-1.4,2.4l-2.2,0.6L178.8,75.7z"/>
+                  </g>
+                  <path fill="#A9DDF3" d="M175.5,55.9l2.2-0.6c1.1-0.3,2.2,0.3,2.4,1.4v0c0.3,1.1-0.3,2.2-1.4,2.4l-2.2,0.6L175.5,55.9z"/>
+                  <path fill="#A9DDF3" d="M152.1,50.4l2.2-0.6c1.1-0.3,2.2,0.3,2.4,1.4v0c0.3,1.1-0.3,2.2-1.4,2.4l-2.2,0.6L152.1,50.4z"/>
+                  <path fill="#FFFFFF" stroke="#3A5E77" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" d="M123.5,97.8 c-41.4,14.9-84.1,30.7-108.2,35.5L1.2,81c33.5-9.9,71.9-16.5,111.9-21.8"/>
+                  <path fill="#FFFFFF" stroke="#3A5E77" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" d="M108.5,60.4 c7.7-5.3,14.3-8.4,22.8-13.2c-2.4,5.3-4.7,10.3-6.7,15.1c4.3,0.3,8.4,0.7,12.3,1.3c-4.2,5-8.1,9.6-11.5,13.9 c3.1,1.1,6,2.4,8.7,3.8c-1.4,2.9-2.7,5.8-3.9,8.5c2.5,3.5,4.6,7.2,6.3,11c-4.9-0.8-9-0.7-16.2-2.7"/>
+                  <path fill="#FFFFFF" stroke="#3A5E77" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" d="M94.5,103.8 c-0.6,4-3.8,8.9-9.4,14.7c-2.6-1.8-5-3.7-7.2-5.7c-2.5,4.1-6.6,8.8-12.2,14c-1.9-2.2-3.4-4.5-4.5-6.9c-4.4,3.3-9.5,6.9-15.4,10.8 c-0.2-3.4,0.1-7.1,1.1-10.9"/>
+                  <path fill="#FFFFFF" stroke="#3A5E77" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" d="M97.5,63.9 c-1.7-2.4-5.9-4.1-12.4-5.2c-0.9,2.2-1.8,4.3-2.5,6.5c-3.8-1.8-9.4-3.1-17-3.8c0.5,2.3,1.2,4.5,1.9,6.8c-5-0.6-11.2-0.9-18.4-1 c2,2.9,0.9,3.5,3.9,6.2"/>
+                </g>
+                <g class="yeti-armR" style="visibility:hidden">
+                  <path fill="#ddf1fa" stroke="#3a5e77" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2.5" d="M265.4 97.3l10.4-38.6-38.9-10.5-20 36.1z"/>
+                  <path fill="#ddf1fa" stroke="#3a5e77" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="10" stroke-width="2.5" d="M252.4 52.4L233 47.2c-2.7-.7-5.4.9-6.1 3.5-.7 2.7.9 5.4 3.5 6.1l10.3 2.8M226 76.4l-19.4-5.2c-2.7-.7-5.4.9-6.1 3.5-.7 2.7.9 5.4 3.5 6.1l18.3 4.9M228.4 66.7l-23.1-6.2c-2.7-.7-5.4.9-6.1 3.5-.7 2.7.9 5.4 3.5 6.1l23.1 6.2M235.8 58.3l-26-7c-2.7-.7-5.4.9-6.1 3.5-.7 2.7.9 5.4 3.5 6.1l21.3 5.7"/>
+                  <path fill="#a9ddf3" d="M207.9 74.7l-2.2-.6c-1.1-.3-2.2.3-2.4 1.4-.3 1.1.3 2.2 1.4 2.4l2.2.6 1-3.8zM206.7 64l-2.2-.6c-1.1-.3-2.2.3-2.4 1.4-.3 1.1.3 2.2 1.4 2.4l2.2.6 1-3.8zM211.2 54.8l-2.2-.6c-1.1-.3-2.2.3-2.4 1.4-.3 1.1.3 2.2 1.4 2.4l2.2.6 1-3.8zM234.6 49.4l-2.2-.6c-1.1-.3-2.2.3-2.4 1.4-.3 1.1.3 2.2 1.4 2.4l2.2.6 1-3.8z"/>
+                  <path fill="#fff" stroke="#3a5e77" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M263.3 96.7c41.4 14.9 84.1 30.7 108.2 35.5l14-52.3C352 70 313.6 63.5 273.6 58.1"/>
+                  <path fill="#fff" stroke="#3a5e77" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M278.2 59.3l-18.6-10 2.5 11.9-10.7 6.5 9.9 8.7-13.9 6.4 9.1 5.9-13.2 9.2 23.1-.9M284.5 100.1c-.4 4 1.8 8.9 6.7 14.8 3.5-1.8 6.7-3.6 9.7-5.5 1.8 4.2 5.1 8.9 10.1 14.1 2.7-2.1 5.1-4.4 7.1-6.8 4.1 3.4 9 7 14.7 11 1.2-3.4 1.8-7 1.7-10.9M314 66.7s5.4-5.7 12.6-7.4c1.7 2.9 3.3 5.7 4.9 8.6 3.8-2.5 9.8-4.4 18.2-5.7.1 3.1.1 6.1 0 9.2 5.5-1 12.5-1.6 20.8-1.9-1.4 3.9-2.5 8.4-2.5 8.4"/>
+                </g>
+              </g>
+            </svg>
+          </div>
+        </div>
+
+        <div class="auth-tabs">
+          <button class="auth-tab active" id="tabLogin">Log in</button>
+          <button class="auth-tab" id="tabReg">Registration</button>
+        </div>
+        <div class="role-picker" id="rolePicker">
+          <label class="role-choice active" id="rc-Farmer">
+            <input type="radio" name="role" value="Farmer" checked>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 22V12"/><path d="M12 16c-5 0-8-2.5-8-6.5 4.5 0 7.5 2 8 6.5Z" fill="currentColor" stroke="none" opacity=".3"/><path d="M12 12c.5-4.5 3.5-7 8-7 0 4-3 7-8 7Z" fill="currentColor" stroke="none" opacity=".5"/></svg>
+            <strong>Farmer</strong>
+          </label>
+          <label class="role-choice" id="rc-Buyer">
+            <input type="radio" name="role" value="Buyer">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+            <strong>Buyer</strong>
+          </label>
+          <label class="role-choice" id="rc-AgWorker">
+            <input type="radio" name="role" value="Ag Worker">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+            <strong>Ag Worker</strong>
+          </label>
+          <label class="role-choice" id="rc-LguAdmin">
+            <input type="radio" name="role" value="LGU Admin">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+            <strong>LGU Admin</strong>
+          </label>
+        </div>
+        <form id="authForm">
+          <div class="form-group" id="nameGroup" style="display:none">
+            <label>Full Name</label>
+            <input type="text" id="authName" placeholder="e.g. Juan Dela Cruz">
+          </div>
+          <div class="form-group">
+            <label>Email or Mobile Number</label>
+            <input type="text" id="authEmail" placeholder="juan@anihan.ph or 09171234567" required value="juan@anihan.ph">
+          </div>
+          <div class="form-group">
+            <label>Password</label>
+            <input type="password" id="authPass" placeholder="Enter password" required value="farmer123">
+            <label class="yeti-show-pw-toggle" id="yetiShowPwToggle">
+              <input type="checkbox" id="yetiShowPwCheck"> Show password
+            </label>
+          </div>
+          <div id="regBlock" style="display:none">
+            <div style="background:#fdfbf7;border:1.5px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px">
+              <div style="font-size:12px;font-weight:700;color:var(--ink);margin-bottom:8px;display:flex;align-items:center;gap:6px">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" style="color:var(--green)"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                Address / Farm Location
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                <div class="form-group" style="margin-bottom:8px">
+                  <label style="font-size:12px">Purok / Zone</label>
+                  <input type="text" id="authPurok" placeholder="e.g. Purok 4" oninput="updateAuthLocPreview()">
+                </div>
+                <div class="form-group" style="margin-bottom:8px">
+                  <label style="font-size:12px">Barangay / Street / Landmark</label>
+                  <input type="text" id="authBarangay" placeholder="e.g. Brgy. San Roque" oninput="updateAuthLocPreview()">
+                </div>
+                <div class="form-group" style="margin-bottom:8px">
+                  <label style="font-size:12px">Municipality / City</label>
+                  <input type="text" id="authMunicipality" placeholder="e.g. Guimba" oninput="updateAuthLocPreview()">
+                </div>
+                <div class="form-group" style="margin-bottom:8px">
+                  <label style="font-size:12px">Province</label>
+                  <input type="text" id="authProvince" placeholder="e.g. Nueva Ecija" oninput="updateAuthLocPreview()">
+                </div>
+              </div>
+              <div style="background:#fff;border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:12px;color:var(--ink2);margin-top:2px">
+                <span style="color:var(--muted);font-size:11px;text-transform:uppercase;font-weight:700">Full Address: </span>
+                <span id="authLocPreview" style="font-weight:700;color:var(--green)">—</span>
+              </div>
+            </div>
+            <div class="form-group" id="rsbsaGroup" style="margin-bottom:14px">
+              <label style="font-size:12px">Special Designation / RSBSA Note <span style="font-weight:400;color:var(--muted)">(optional)</span></label>
+              <input type="text" id="authNote" placeholder="e.g. Non-literate grower, RSBSA #03-49-08-004">
+            </div>
+          </div>
+          <button class="btn btn-primary btn-full btn-lg" type="submit" id="authSubmitBtn">Log in &amp; Open Dashboard</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function openModal(id) {
+      var m = document.getElementById(id);
+      if (m) {
+        m.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+      }
+    }
+    function closeModal(id) {
+      var m = typeof id === 'string' ? document.getElementById(id) : id;
+      if (m) {
+        m.classList.add('hidden');
+        document.body.style.overflow = '';
+      }
+    }
+    window.openModal = openModal;
+    window.closeModal = closeModal;
+
+    window.openRoleLogin = function(role, isRegister) {
+      if (isRegister && role === 'LGU Admin') role = 'Farmer';
+      window.setAuthMode(isRegister ? 'register' : 'login');
+      window.selectRole(role || 'Farmer');
+      openModal('authModal');
+    };
+
+    window.setAuthMode = function(mode) {
+      var isReg = mode === 'register';
+      var tabL = document.getElementById('tabLogin');
+      var tabR = document.getElementById('tabReg');
+      var nameG = document.getElementById('nameGroup');
+      var regB = document.getElementById('regBlock');
+      var sBtn = document.getElementById('authSubmitBtn');
+      var title = document.getElementById('authModalTitle');
+      var adminChoice = document.getElementById('rc-LguAdmin');
+
+      if (tabL) tabL.classList.toggle('active', !isReg);
+      if (tabR) tabR.classList.toggle('active', isReg);
+      if (nameG) nameG.style.display = isReg ? 'block' : 'none';
+      if (regB) regB.style.display = isReg ? 'block' : 'none';
+      if (sBtn) sBtn.textContent = isReg ? 'Complete Registration & Open Dashboard' : 'Log in & Open Dashboard';
+      if (title) title.textContent = isReg ? 'Account Registration' : 'Log in to Your Account';
+
+      // LGU Admin can only log in, no public registration
+      if (adminChoice) {
+        adminChoice.style.display = isReg ? 'none' : 'block';
+      }
+
+      var checked = document.querySelector('input[name="role"]:checked');
+      var role = checked ? checked.value : 'Farmer';
+      if (isReg && role === 'LGU Admin') {
+        window.selectRole('Farmer');
+        role = 'Farmer';
+      }
+      updateFieldsForRole(role, isReg);
+    };
+
+    window.selectRole = function(role) {
+      document.querySelectorAll('.role-choice').forEach(function(c){ c.classList.remove('active'); });
+      var map = {'Farmer':'rc-Farmer','Buyer':'rc-Buyer','Ag Worker':'rc-AgWorker','LGU Admin':'rc-LguAdmin'};
+      var el = document.getElementById(map[role]);
+      if (el) {
+        el.classList.add('active');
+        var inp = el.querySelector('input');
+        if (inp) inp.checked = true;
+      }
+      var isReg = document.getElementById('tabReg') && document.getElementById('tabReg').classList.contains('active');
+      updateFieldsForRole(role, isReg);
+    };
+
+    function updateFieldsForRole(role, isReg) {
+      var mock = (typeof MOCK_USERS !== 'undefined' && MOCK_USERS[role]) ? MOCK_USERS[role] : {
+        Farmer: { name:'Juan Dela Cruz', email:'juan@anihan.ph', location:'Guimba, Nueva Ecija' },
+        Buyer: { name:'Maria Reyes', email:'maria@anihan.ph', location:'Cabanatuan City, Nueva Ecija' },
+        'Ag Worker': { name:'Enrique Dizon', email:'enrique@anihan.ph', location:'Guimba, Nueva Ecija' },
+        'LGU Admin': { name:'Engr. Arnold Mendoza', email:'admin@anihan.ph', location:'Guimba Municipal Hall, Nueva Ecija' }
+      }[role] || { name:'Juan Dela Cruz', email:'juan@anihan.ph', location:'Guimba, Nueva Ecija' };
+
+      var emailInp = document.getElementById('authEmail');
+      var passInp = document.getElementById('authPass');
+      var nameInp = document.getElementById('authName');
+
+      if (!isReg) {
+        if (emailInp) emailInp.value = mock.email;
+        if (passInp) passInp.value = role === 'LGU Admin' ? 'admin123' : 'password123';
+        if (nameInp) nameInp.value = mock.name;
+      } else {
+        if (nameInp) nameInp.value = '';
+        if (emailInp) emailInp.value = '';
+        if (passInp) passInp.value = '';
+        var pInp = document.getElementById('authPurok');
+        var bInp = document.getElementById('authBarangay');
+        var mInp = document.getElementById('authMunicipality');
+        var provInp = document.getElementById('authProvince');
+        var nInp = document.getElementById('authNote');
+        if (pInp) pInp.value = '';
+        if (bInp) bInp.value = '';
+        if (mInp) mInp.value = role === 'Buyer' ? 'Cabanatuan City' : 'Guimba';
+        if (provInp) provInp.value = 'Nueva Ecija';
+        if (nInp) nInp.value = '';
+        if (typeof updateAuthLocPreview === 'function') updateAuthLocPreview();
+      }
+    }
+
+    // Role radio button clicks
+    document.querySelectorAll('.role-choice').forEach(function(c){
+      c.addEventListener('click', function(){
+        document.querySelectorAll('.role-choice').forEach(function(x){ x.classList.remove('active'); });
+        c.classList.add('active');
+        var inp = c.querySelector('input');
+        if (inp) inp.checked = true;
+        var isReg = document.getElementById('tabReg') && document.getElementById('tabReg').classList.contains('active');
+        updateFieldsForRole(inp ? inp.value : 'Farmer', isReg);
+      });
+    });
+
+    // Location preview for registration
+    window.updateAuthLocPreview = function() {
+      var parts = [
+        (document.getElementById('authPurok') || {}).value || '',
+        (document.getElementById('authBarangay') || {}).value || '',
+        (document.getElementById('authMunicipality') || {}).value || '',
+        (document.getElementById('authProvince') || {}).value || ''
+      ].filter(function(s){ return s.trim(); });
+      var prev = document.getElementById('authLocPreview');
+      if (prev) prev.textContent = parts.length ? parts.join(', ') : '—';
+    };
+
+    // Form submission
+    var authForm = document.getElementById('authForm');
+    if (authForm) {
+      authForm.addEventListener('submit', function(e){
+        e.preventDefault();
+        var checked = document.querySelector('input[name="role"]:checked');
+        var role = checked ? checked.value : 'Farmer';
+        var nameInp = document.getElementById('authName');
+        var emailInp = document.getElementById('authEmail');
+        var name = (nameInp && nameInp.value.trim()) ? nameInp.value.trim() : (role === 'Farmer' ? 'Juan Dela Cruz' : role === 'Buyer' ? 'Maria Reyes' : role === 'LGU Admin' ? 'Engr. Arnold Mendoza' : 'Enrique Dizon');
+        var email = (emailInp && emailInp.value.trim()) ? emailInp.value.trim() : (role === 'Farmer' ? 'juan@anihan.ph' : role === 'Buyer' ? 'maria@anihan.ph' : role === 'LGU Admin' ? 'admin@anihan.ph' : 'enrique@anihan.ph');
+        // Build location from structured parts
+        var purok = ((document.getElementById('authPurok') || {}).value || '').trim();
+        var brgy  = ((document.getElementById('authBarangay') || {}).value || '').trim();
+        var muni  = ((document.getElementById('authMunicipality') || {}).value || '').trim();
+        var prov  = ((document.getElementById('authProvince') || {}).value || '').trim();
+        var note  = ((document.getElementById('authNote') || {}).value || '').trim();
+        var loc = [purok, brgy, muni, prov].filter(Boolean).join(', ') || (role === 'Buyer' ? 'Cabanatuan City, Nueva Ecija' : role === 'LGU Admin' ? 'Guimba Municipal Hall, Nueva Ecija' : 'Guimba, Nueva Ecija');
+
+        var user = {
+          id: role === 'Farmer' ? 'U001' : role === 'Buyer' ? 'U002' : role === 'LGU Admin' ? 'ADM01' : 'U003',
+          name: name,
+          email: email,
+          role: role,
+          initials: name.split(' ').map(function(w){return w[0];}).join('').slice(0,2).toUpperCase(),
+          location: loc,
+          purok: purok,
+          barangay: brgy,
+          municipality: muni,
+          province: prov,
+          note: note
+        };
+
+        try {
+          localStorage.setItem('anihan_user', JSON.stringify(user));
+        } catch(err){}
+
+        if (role === 'Farmer') window.location.href = 'farmer/index.html';
+        else if (role === 'Buyer') window.location.href = 'buyer/index.html';
+        else if (role === 'Ag Worker') window.location.href = 'ag-worker/index.html';
+        else if (role === 'LGU Admin') window.location.href = 'admin/index.html';
+        else window.location.href = 'farmer/index.html';
+      });
+    }
+
+    // Modal close handlers
+    document.querySelectorAll('[data-close-modal]').forEach(function(b){
+      b.addEventListener('click', function(){
+        var m = b.closest('.modal-backdrop');
+        if (m) closeModal(m.id);
+      });
+    });
+    document.querySelectorAll('.modal-backdrop').forEach(function(m){
+      m.addEventListener('click', function(e){
+        if (e.target === m) closeModal(m.id);
+      });
+    });
+
+    // Top action buttons
+    var oL = document.getElementById('openLoginBtn');
+    if (oL) oL.addEventListener('click', function(){ window.openRoleLogin('Farmer', false); });
+
+    var oR = document.getElementById('openRegBtn');
+    if (oR) oR.addEventListener('click', function(){ window.openRoleLogin('Farmer', true); });
+
+    var hJ = document.getElementById('heroJoinBtn');
+    if (hJ) hJ.addEventListener('click', function(){ window.openRoleLogin('Farmer', true); });
+
+    var tL = document.getElementById('tabLogin');
+    if (tL) tL.addEventListener('click', function(){ window.setAuthMode('login'); });
+
+    var tR = document.getElementById('tabReg');
+    if (tR) tR.addEventListener('click', function(){ window.setAuthMode('register'); });
+
+    window.addEventListener('scroll', function(){
+      var nav = document.getElementById('landNav');
+      if (nav) nav.classList.toggle('scrolled', window.scrollY > 40);
+    });
+  </script>
+
+  <!-- YETI ANIMATION SCRIPT -->
+  <script>
+  (function() {
+    var yetiReady = false;
+    var yetiBlinking = null;
+    var yetiEyeScale = 1;
+    var yetiEyesCovered = false;
+    var yetiMouthStatus = 'small';
+    var yetiActiveEl = null;
+    var yetiShowPwClicked = false;
+
+    function getYetiEls() {
+      return {
+        mySVG:        document.querySelector('#yetiContainer'),
+        twoFingers:   document.querySelector('.yeti-twoFingers'),
+        armL:         document.querySelector('.yeti-armL'),
+        armR:         document.querySelector('.yeti-armR'),
+        eyeL:         document.querySelector('.yeti-eyeL'),
+        eyeR:         document.querySelector('.yeti-eyeR'),
+        nose:         document.querySelector('.yeti-nose'),
+        mouth:        document.querySelector('.yeti-mouth'),
+        mouthBG:      document.querySelector('.yeti-mouthBG'),
+        mouthSmallBG: document.querySelector('.yeti-mouthSmallBG'),
+        mouthMediumBG:document.querySelector('.yeti-mouthMediumBG'),
+        mouthLargeBG: document.querySelector('.yeti-mouthLargeBG'),
+        mouthMaskPath:document.querySelector('#yetiMouthMaskPath'),
+        mouthOutline: document.querySelector('.yeti-mouthOutline'),
+        tooth:        document.querySelector('.yeti-tooth'),
+        tongue:       document.querySelector('.yeti-tongue'),
+        chin:         document.querySelector('.yeti-chin'),
+        face:         document.querySelector('.yeti-face'),
+        eyebrow:      document.querySelector('.yeti-eyebrow'),
+        outerEarL:    document.querySelector('.yeti-outerEarL'),
+        outerEarR:    document.querySelector('.yeti-outerEarR'),
+        earHairL:     document.querySelector('.yeti-earHairL'),
+        earHairR:     document.querySelector('.yeti-earHairR'),
+        hair:         document.querySelector('.yeti-hair'),
+        bodyBG:       document.querySelector('.yeti-bodyBGnormal'),
+        bodyBGchanged:document.querySelector('.yeti-bodyBGchanged'),
+        email:        document.getElementById('authEmail'),
+        password:     document.getElementById('authPass'),
+        showPwCheck:  document.getElementById('yetiShowPwCheck'),
+        showPwToggle: document.getElementById('yetiShowPwToggle')
+      };
+    }
+
+    function getPos(el) {
+      var x = 0, y = 0;
+      while (el) {
+        if (el.tagName === 'BODY') {
+          x += (el.offsetLeft - (el.scrollLeft || document.documentElement.scrollLeft) + el.clientLeft);
+          y += (el.offsetTop - (el.scrollTop || document.documentElement.scrollTop) + el.clientTop);
+        } else {
+          x += (el.offsetLeft - el.scrollLeft + el.clientLeft);
+          y += (el.offsetTop - el.scrollTop + el.clientTop);
+        }
+        el = el.offsetParent;
+      }
+      return {x:x, y:y};
+    }
+
+    function getAngle(x1,y1,x2,y2){ return Math.atan2(y1-y2,x1-x2); }
+    function randInt(max){ return Math.floor(Math.random()*max); }
+
+    function startYetiBlinking(els, delay) {
+      delay = delay ? randInt(delay) : 1;
+      yetiBlinking = gsap.to([els.eyeL, els.eyeR], 0.1, {
+        delay: delay, scaleY: 0, yoyo: true, repeat: 1,
+        transformOrigin: 'center center',
+        onComplete: function(){ startYetiBlinking(els, 12); }
+      });
+    }
+    function stopYetiBlinking(els) {
+      if (yetiBlinking) { yetiBlinking.kill(); yetiBlinking = null; }
+      gsap.set([els.eyeL, els.eyeR], {scaleY: yetiEyeScale});
+    }
+
+    function yetiCoverEyes(els) {
+      gsap.killTweensOf([els.armL, els.armR]);
+      gsap.set([els.armL, els.armR], {visibility:'visible'});
+      gsap.to(els.armL, 0.45, {x:-93, y:10, rotation:0, ease:'quad.out'});
+      gsap.to(els.armR, 0.45, {x:-93, y:10, rotation:0, ease:'quad.out', delay:0.1});
+      gsap.to(els.bodyBG, 0.45, {morphSVG: els.bodyBGchanged, ease:'quad.out'});
+      yetiEyesCovered = true;
+    }
+    function yetiUncoverEyes(els) {
+      gsap.killTweensOf([els.armL, els.armR]);
+      gsap.to(els.armL, 1.35, {y:220, ease:'quad.out'});
+      gsap.to(els.armL, 1.35, {rotation:105, ease:'quad.out', delay:0.1});
+      gsap.to(els.armR, 1.35, {y:220, ease:'quad.out'});
+      gsap.to(els.armR, 1.35, {rotation:-105, ease:'quad.out', delay:0.1,
+        onComplete: function(){ gsap.set([els.armL, els.armR], {visibility:'hidden'}); }
+      });
+      gsap.to(els.bodyBG, 0.45, {morphSVG: els.bodyBG, ease:'quad.out'});
+      yetiEyesCovered = false;
+    }
+    function yetiResetFace(els) {
+      gsap.to([els.eyeL, els.eyeR], 1, {x:0,y:0,ease:'expo.out'});
+      gsap.to(els.nose, 1, {x:0,y:0,scaleX:1,scaleY:1,ease:'expo.out'});
+      gsap.to(els.mouth, 1, {x:0,y:0,rotation:0,ease:'expo.out'});
+      gsap.to(els.chin, 1, {x:0,y:0,scaleY:1,ease:'expo.out'});
+      gsap.to([els.face, els.eyebrow], 1, {x:0,y:0,skewX:0,ease:'expo.out'});
+      gsap.to([els.outerEarL,els.outerEarR,els.earHairL,els.earHairR,els.hair], 1, {x:0,y:0,scaleY:1,ease:'expo.out'});
+    }
+    function yetiSpreadFingers(els) {
+      gsap.to(els.twoFingers, 0.35, {transformOrigin:'bottom left', rotation:30, x:-9, y:-2, ease:'power2.inOut'});
+    }
+    function yetiCloseFingers(els) {
+      gsap.to(els.twoFingers, 0.35, {transformOrigin:'bottom left', rotation:0, x:0, y:0, ease:'power2.inOut'});
+    }
+
+    function yetiCalcFaceMove(els, svgCoords, emailCoords, screenCenter, emailScrollMax) {
+      var email = els.email;
+      var carPos = email.selectionEnd || email.value.length;
+      var div = document.createElement('div');
+      var span = document.createElement('span');
+      var copyStyle = getComputedStyle(email);
+      [].forEach.call(copyStyle, function(p){ div.style[p] = copyStyle[p]; });
+      div.style.position = 'absolute'; div.style.visibility = 'hidden';
+      document.body.appendChild(div);
+      div.textContent = email.value.substr(0, carPos);
+      span.textContent = email.value.substr(carPos) || '.';
+      div.appendChild(span);
+      var eyeLCoords = {x: svgCoords.x+84, y: svgCoords.y+76};
+      var eyeRCoords = {x: svgCoords.x+113, y: svgCoords.y+76};
+      var noseCoords = {x: svgCoords.x+97, y: svgCoords.y+81};
+      var mouthCoords= {x: svgCoords.x+100,y: svgCoords.y+100};
+      var caretX, dFromC;
+      if (email.scrollWidth <= emailScrollMax) {
+        var cpos = getPos(span);
+        caretX = emailCoords.x + cpos.x;
+        dFromC = screenCenter - caretX;
+      } else {
+        caretX = emailCoords.x + emailScrollMax;
+        dFromC = screenCenter - caretX;
+      }
+      var ey = emailCoords.y + 25;
+      var eyeLAngle = getAngle(eyeLCoords.x,eyeLCoords.y,caretX,ey);
+      var eyeRAngle = getAngle(eyeRCoords.x,eyeRCoords.y,caretX,ey);
+      var noseAngle = getAngle(noseCoords.x,noseCoords.y,caretX,ey);
+      var mouthAngle= getAngle(mouthCoords.x,mouthCoords.y,caretX,ey);
+      var eyeLX=Math.cos(eyeLAngle)*20, eyeLY=Math.sin(eyeLAngle)*10;
+      var eyeRX=Math.cos(eyeRAngle)*20, eyeRY=Math.sin(eyeRAngle)*10;
+      var noseX=Math.cos(noseAngle)*23, noseY=Math.sin(noseAngle)*10;
+      var mouthX=Math.cos(mouthAngle)*23, mouthY=Math.sin(mouthAngle)*10;
+      var mouthR=Math.cos(mouthAngle)*6;
+      var chinX=mouthX*.8, chinY=mouthY*.5;
+      var chinS=1-((dFromC*.15)/100);
+      if(chinS>1){chinS=1-(chinS-1);if(chinS<.5)chinS=.5;}
+      var faceX=mouthX*.3,faceY=mouthY*.4;
+      var faceSkew=Math.cos(mouthAngle)*5;
+      var eyebrowSkew=Math.cos(mouthAngle)*25;
+      var outerEarX=Math.cos(mouthAngle)*4, outerEarY=Math.cos(mouthAngle)*5;
+      var hairX=Math.cos(mouthAngle)*6;
+      gsap.to(els.eyeL,1,{x:-eyeLX,y:-eyeLY,ease:'expo.out'});
+      gsap.to(els.eyeR,1,{x:-eyeRX,y:-eyeRY,ease:'expo.out'});
+      gsap.to(els.nose,1,{x:-noseX,y:-noseY,rotation:mouthR,transformOrigin:'center center',ease:'expo.out'});
+      gsap.to(els.mouth,1,{x:-mouthX,y:-mouthY,rotation:mouthR,transformOrigin:'center center',ease:'expo.out'});
+      gsap.to(els.chin,1,{x:-chinX,y:-chinY,scaleY:chinS,ease:'expo.out'});
+      gsap.to(els.face,1,{x:-faceX,y:-faceY,skewX:-faceSkew,transformOrigin:'center top',ease:'expo.out'});
+      gsap.to(els.eyebrow,1,{x:-faceX,y:-faceY,skewX:-eyebrowSkew,transformOrigin:'center top',ease:'expo.out'});
+      gsap.to(els.outerEarL,1,{x:outerEarX,y:-outerEarY,ease:'expo.out'});
+      gsap.to(els.outerEarR,1,{x:outerEarX,y:outerEarY,ease:'expo.out'});
+      gsap.to(els.earHairL,1,{x:-outerEarX,y:-outerEarY,ease:'expo.out'});
+      gsap.to(els.earHairR,1,{x:-outerEarX,y:outerEarY,ease:'expo.out'});
+      gsap.to(els.hair,1,{x:hairX,scaleY:1.2,transformOrigin:'center bottom',ease:'expo.out'});
+      document.body.removeChild(div);
+    }
+
+    function yetiOnEmailInput(els, svgCoords, emailCoords, screenCenter, emailScrollMax) {
+      yetiCalcFaceMove(els, svgCoords, emailCoords, screenCenter, emailScrollMax);
+      var v = els.email.value;
+      if (v.length > 0) {
+        if (v.includes('@')) {
+          yetiMouthStatus = 'large';
+          gsap.to([els.mouthBG,els.mouthOutline,els.mouthMaskPath],1,{morphSVG:els.mouthLargeBG,ease:'expo.out'});
+          gsap.to(els.tooth,1,{x:3,y:-2,ease:'expo.out'});
+          gsap.to(els.tongue,1,{y:2,ease:'expo.out'});
+          gsap.to([els.eyeL,els.eyeR],1,{scaleX:.65,scaleY:.65,ease:'expo.out',transformOrigin:'center center'});
+          yetiEyeScale = .65;
+        } else {
+          yetiMouthStatus = 'medium';
+          gsap.to([els.mouthBG,els.mouthOutline,els.mouthMaskPath],1,{morphSVG:els.mouthMediumBG,shapeIndex:8,ease:'expo.out'});
+          gsap.to(els.tooth,1,{x:0,y:0,ease:'expo.out'});
+          gsap.to(els.tongue,1,{x:0,y:1,ease:'expo.out'});
+          gsap.to([els.eyeL,els.eyeR],1,{scaleX:.85,scaleY:.85,ease:'expo.out'});
+          yetiEyeScale = .85;
+        }
+      } else {
+        yetiMouthStatus = 'small';
+        gsap.to([els.mouthBG,els.mouthOutline,els.mouthMaskPath],1,{morphSVG:els.mouthSmallBG,shapeIndex:9,ease:'expo.out'});
+        gsap.to(els.tooth,1,{x:0,y:0,ease:'expo.out'});
+        gsap.to(els.tongue,1,{y:0,ease:'expo.out'});
+        gsap.to([els.eyeL,els.eyeR],1,{scaleX:1,scaleY:1,ease:'expo.out'});
+        yetiEyeScale = 1;
+      }
+    }
+
+    function initYeti() {
+      if (typeof gsap === 'undefined' || typeof MorphSVGPlugin === 'undefined') {
+        setTimeout(initYeti, 100); return;
+      }
+      gsap.registerPlugin(MorphSVGPlugin);
+      var els = getYetiEls();
+      if (!els.mySVG || !els.email || !els.password) return;
+
+      // Reset state
+      yetiEyeScale = 1; yetiEyesCovered = false; yetiMouthStatus = 'small';
+      yetiActiveEl = null; yetiShowPwClicked = false;
+      if (yetiBlinking) { yetiBlinking.kill(); yetiBlinking = null; }
+
+      var svgCoords = getPos(els.mySVG);
+      var emailCoords = getPos(els.email);
+      var screenCenter = svgCoords.x + (els.mySVG.offsetWidth / 2);
+      var emailScrollMax = els.email.scrollWidth;
+
+      // Arm initial positions
+      gsap.set(els.armL, {x:-93, y:220, rotation:105, transformOrigin:'top left'});
+      gsap.set(els.armR, {x:-93, y:220, rotation:-105, transformOrigin:'top right'});
+      gsap.set(els.mouth, {transformOrigin:'center center'});
+
+      // Email events
+      var onEmailFocus = function(){
+        yetiActiveEl='email';
+        yetiOnEmailInput(els, svgCoords, emailCoords, screenCenter, emailScrollMax);
+      };
+      var onEmailInput = function(){
+        yetiOnEmailInput(els, svgCoords, emailCoords, screenCenter, emailScrollMax);
+      };
+      var onEmailBlur = function(){
+        yetiActiveEl = null;
+        setTimeout(function(){
+          if (yetiActiveEl !== 'email') yetiResetFace(els);
+        }, 100);
+      };
+
+      // Password events
+      var onPassFocus = function(){
+        yetiActiveEl = 'password';
+        if (!yetiEyesCovered) yetiCoverEyes(els);
+      };
+      var onPassBlur = function(){
+        yetiActiveEl = null;
+        setTimeout(function(){
+          if (yetiActiveEl !== 'toggle' && yetiActiveEl !== 'password') yetiUncoverEyes(els);
+        }, 100);
+      };
+
+      // Show password toggle
+      var onToggleFocus = function(){ yetiActiveEl='toggle'; if(!yetiEyesCovered) yetiCoverEyes(els); };
+      var onToggleBlur = function(){
+        yetiActiveEl = null;
+        if (!yetiShowPwClicked) {
+          setTimeout(function(){
+            if (yetiActiveEl!=='password' && yetiActiveEl!=='toggle') yetiUncoverEyes(els);
+          }, 100);
+        }
+      };
+      var onToggleChange = function(){
+        setTimeout(function(){
+          if (els.showPwCheck.checked) { els.password.type='text'; yetiSpreadFingers(els); }
+          else { els.password.type='password'; yetiCloseFingers(els); }
+        }, 100);
+      };
+
+      // Remove old listeners by cloning
+      var newEmail = els.email.cloneNode(true); els.email.parentNode.replaceChild(newEmail, els.email);
+      var newPass = els.password.cloneNode(true); els.password.parentNode.replaceChild(newPass, els.password);
+      var newCheck = els.showPwCheck ? els.showPwCheck.cloneNode(true) : null;
+      if (newCheck && els.showPwCheck) els.showPwCheck.parentNode.replaceChild(newCheck, els.showPwCheck);
+
+      // Re-acquire after clone
+      els = getYetiEls();
+
+      els.email.addEventListener('focus', onEmailFocus);
+      els.email.addEventListener('input', onEmailInput);
+      els.email.addEventListener('blur',  onEmailBlur);
+      els.password.addEventListener('focus', onPassFocus);
+      els.password.addEventListener('blur',  onPassBlur);
+      if (els.showPwCheck) {
+        els.showPwCheck.addEventListener('change', onToggleChange);
+        els.showPwCheck.addEventListener('focus',  onToggleFocus);
+        els.showPwCheck.addEventListener('blur',   onToggleBlur);
+        els.showPwCheck.addEventListener('mousedown', function(){ yetiShowPwClicked=true; });
+        els.showPwCheck.addEventListener('mouseup',   function(){ yetiShowPwClicked=false; });
+      }
+
+      startYetiBlinking(els, 5);
+      yetiReady = true;
+    }
+
+    // Initialize Yeti each time the auth modal opens
+    var origOpenModal = window.openModal;
+    window.openModal = function(id) {
+      origOpenModal(id);
+      if (id === 'authModal') {
+        setTimeout(initYeti, 80);
+      }
+    };
+  })();
+  </script>
+</body>
+</html>

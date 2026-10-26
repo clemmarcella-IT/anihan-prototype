@@ -1,0 +1,679 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Manage All Accounts — LGU Admin — A.N.I.H.A.N.</title>
+  <link rel="stylesheet" href="../styles.css">
+  <script src="../app.js" defer></script>
+  <style>
+    .acc-hero{background:linear-gradient(135deg,#0c2815,#1b4f2c,#2d7342);padding:32px 28px;color:#fff;box-shadow:0 6px 20px rgba(12,40,21,.15)}
+    .acc-hero h1{font-size:28px;font-weight:800;margin-bottom:6px;color:#fff}
+    .acc-hero p{font-size:14px;opacity:.92;max-width:680px}
+    
+    /* PAGINATION STYLES */
+    .table-footer{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-top:1px solid var(--border);background:#fafaf8;flex-wrap:wrap;gap:12px}
+    .pagination-controls{display:flex;align-items:center;gap:6px}
+    .page-btn{border:1px solid var(--border);background:#fff;border-radius:6px;padding:6px 12px;font-size:12px;font-weight:600;color:var(--ink2);cursor:pointer;transition:all .15s}
+    .page-btn:hover:not(:disabled){background:var(--cream);border-color:var(--green);color:var(--green)}
+    .page-btn.active{background:var(--green);color:#fff;border-color:var(--green);font-weight:700}
+    .page-btn:disabled{opacity:.4;cursor:not-allowed}
+    .page-size-select{padding:5px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-weight:600;background:#fff;color:var(--ink)}
+
+    /* PROVISION ROLE PICKER LIKE HOME */
+    .prov-role-picker{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+    .prov-role-choice{border:1.5px solid var(--border);border-radius:8px;padding:12px 10px;text-align:center;cursor:pointer;transition:all .18s;position:relative}
+    .prov-role-choice input{position:absolute;opacity:0;width:0;height:0}
+    .prov-role-choice svg{width:24px;height:24px;display:block;margin:0 auto 6px;color:var(--muted)}
+    .prov-role-choice strong{display:block;font-size:12px;font-weight:700;color:var(--muted)}
+    .prov-role-choice.active{border-color:var(--green);background:var(--green-soft)}
+    .prov-role-choice.active svg,.prov-role-choice.active strong{color:var(--green)}
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a href="index.html" class="brand">
+        <div class="brand-mark" style="background:#1b4f2c">
+          <svg viewBox="0 0 48 48" fill="none"><path d="M24 40V18" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><path d="M24 27c-9 0-14-4-14-11 8 0 13 3 14 11Z" fill="#EAA023"/><path d="M24 20c1-8 6-12 14-12 0 7-5 12-14 12Z" fill="currentColor"/></svg>
+        </div>
+        <div class="brand-text"><strong>A.N.I.H.A.N.</strong><small>LGU Municipal Agriculture Office</small></div>
+      </a>
+      <nav id="mainNav"></nav>
+      <div class="topbar-right">
+        <div id="userChip"></div>
+        <button id="logoutBtn">Log out</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="acc-hero">
+    <div style="max-width:1280px;margin:0 auto;padding:0 28px">
+      <div class="eyebrow" style="color:rgba(255,255,255,.85);margin-bottom:8px">Office of the Municipal Agriculturist</div>
+      <h1>Manage All Municipal Accounts</h1>
+      <p>Comprehensive administration of all farmers, livestock raisers, commercial buyers, and extension workers. Review low-tech farmers registered by Barangay Ag Workers to approve or disapprove, manage credentials, and provision verified accounts.</p>
+    </div>
+  </div>
+
+  <div class="page-wrap">
+    <!-- STATS -->
+    <div class="stat-grid" style="margin-bottom:24px">
+      <div class="stat-card">
+        <div class="stat-label">Total Registered</div>
+        <div class="stat-value" id="stTotal">0</div>
+        <div class="stat-sub">complete municipal registry</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Farmers &amp; Producers</div>
+        <div class="stat-value" id="stFarmers" style="color:var(--green)">0</div>
+        <div class="stat-sub">crops, cattle &amp; eggs</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Low-Tech (Assisted)</div>
+        <div class="stat-value" id="stLowTech" style="color:var(--gold)">0</div>
+        <div class="stat-sub">registered by Ag Worker</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Pending Approval</div>
+        <div class="stat-value" id="stPending" style="color:var(--gold)">0</div>
+        <div class="stat-sub">awaiting LGU approval</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Verified Buyers</div>
+        <div class="stat-value" id="stBuyers" style="color:var(--blue)">0</div>
+        <div class="stat-sub">merchants &amp; stalls</div>
+      </div>
+    </div>
+
+    <!-- SEARCH & FILTER BAR -->
+    <div class="filter-bar" style="margin-bottom:18px">
+      <div class="filter-tabs" id="roleTabs" style="flex-wrap:wrap">
+        <button class="filter-tab active" data-filter="all">All Accounts</button>
+        <button class="filter-tab" data-filter="lowTech" style="color:#8a4d00;font-weight:700">&#9997; Low-Tech (Assisted Farmers)</button>
+        <button class="filter-tab" data-filter="Farmer">All Farmers</button>
+        <button class="filter-tab" data-filter="Buyer">Buyers</button>
+        <button class="filter-tab" data-filter="Ag Worker">Ag Extension Workers</button>
+        <button class="filter-tab" data-filter="Pending Approval">Pending Approval</button>
+        <button class="filter-tab" data-filter="Active">Active</button>
+        <button class="filter-tab" data-filter="Suspended">Suspended</button>
+        <button class="filter-tab" data-filter="Disapproved">Disapproved</button>
+      </div>
+      <div class="search-box">
+        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        <input type="text" id="searchInput" placeholder="Search by name, ID, phone, email, town, RSBSA...">
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="openCreateAccountModal()">+ Provision New Account</button>
+    </div>
+
+    <!-- TABLE PANEL -->
+    <div class="panel">
+      <div class="panel-head">
+        <div>
+          <h2 id="tableTitle">Municipal Registry Records</h2>
+          <small id="recordCount" style="color:var(--muted)">Showing accounts</small>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <label style="font-size:12px;color:var(--muted)">Show:</label>
+          <select id="pageSizeSelect" class="page-size-select" onchange="changePageSize(this.value)">
+            <option value="5">5 per page</option>
+            <option value="10" selected>10 per page</option>
+            <option value="15">15 per page</option>
+            <option value="20">20 per page</option>
+          </select>
+        </div>
+      </div>
+      <div class="panel-body" style="padding:0;overflow-x:auto">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>User Name &amp; ID</th>
+              <th>Role</th>
+              <th>Contact Details</th>
+              <th>Municipality / Location</th>
+              <th>Special Designation / RSBSA</th>
+              <th>Registration Source</th>
+              <th>Status</th>
+              <th style="text-align:right">Administrative Actions</th>
+            </tr>
+          </thead>
+          <tbody id="accountsTableBody">
+            <!-- Rendered by JS -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- TABLE FOOTER WITH PAGINATION -->
+      <div class="table-footer">
+        <div id="pageInfoText" style="font-size:12px;color:var(--muted)">
+          Showing 1 to 10 of 10 accounts
+        </div>
+        <div class="pagination-controls" id="paginationControls">
+          <!-- Rendered by JS -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- EDIT CREDENTIALS MODAL -->
+  <div class="modal-backdrop hidden" id="editModal">
+    <div class="modal-box" style="max-width:560px">
+      <div class="modal-head">
+        <h2>Edit Account Credentials &amp; Profile</h2>
+        <button class="modal-close" data-close-modal>&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:12px;color:var(--muted);margin-bottom:16px">
+          Update credential records, modify address info, and adjust account authorization status.
+        </p>
+        <form id="editForm" onsubmit="saveEditedAccount(event)">
+          <input type="hidden" id="editId">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Full Name</label>
+              <input type="text" id="editName" required>
+            </div>
+            <div class="form-group">
+              <label>Account Role</label>
+              <select id="editRole">
+                <option value="Farmer">Farmer / Grower (Seller)</option>
+                <option value="Buyer">Buyer / Vendor</option>
+                <option value="Ag Worker">Barangay Ag Extension Worker</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Mobile Number / Contact Phone</label>
+              <input type="text" id="editPhone" placeholder="0917-889-2101">
+            </div>
+            <div class="form-group">
+              <label>Email Address</label>
+              <input type="email" id="editEmail" placeholder="user@anihan.ph">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Account Authorization Status</label>
+            <select id="editStatus">
+              <option value="Active">Active (Approved)</option>
+              <option value="Pending Approval">Pending Approval</option>
+              <option value="Suspended">Suspended</option>
+              <option value="Disapproved">Disapproved</option>
+            </select>
+          </div>
+
+          <div style="background:#fdfbf7;border:1.5px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px">
+            <div style="font-size:12px;font-weight:700;color:var(--ink);margin-bottom:8px">Location / Farmstead Address</div>
+            <div class="form-row">
+              <div class="form-group" style="margin-bottom:8px">
+                <label style="font-size:11px">Purok / Zone</label>
+                <input type="text" id="editPurok" placeholder="e.g. Purok 4">
+              </div>
+              <div class="form-group" style="margin-bottom:8px">
+                <label style="font-size:11px">Barangay / Street</label>
+                <input type="text" id="editBarangay" placeholder="e.g. Brgy. San Roque">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group" style="margin-bottom:8px">
+                <label style="font-size:11px">Municipality / City</label>
+                <input type="text" id="editMunicipality" placeholder="e.g. Guimba">
+              </div>
+              <div class="form-group" style="margin-bottom:8px">
+                <label style="font-size:11px">Province</label>
+                <input type="text" id="editProvince" placeholder="e.g. Nueva Ecija">
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>RSBSA Note / Special Designation</label>
+            <input type="text" id="editNote" placeholder="e.g. RSBSA #03-49-08-004, Non-literate assisted grower">
+          </div>
+
+          <div class="modal-foot" style="padding:16px 0 0;justify-content:flex-end">
+            <button class="btn btn-secondary" type="button" data-close-modal>Cancel</button>
+            <button class="btn btn-primary" type="submit">Save Credential Updates</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- PROVISION NEW ACCOUNT MODAL (EXACTLY MATCHES REGISTRATION FORM ON HOME PAGE) -->
+  <div class="modal-backdrop hidden" id="createModal">
+    <div class="modal-box" style="max-width:520px">
+      <div class="modal-head">
+        <h2>Provision New Account</h2>
+        <button class="modal-close" data-close-modal>&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:12px;color:var(--muted);margin-bottom:14px">
+          Official LGU municipal account enrollment matching the standard citizen registration protocol.
+        </p>
+        <form id="createForm" onsubmit="saveNewAccount(event)">
+          <!-- ROLE PICKER IDENTICAL TO HOME -->
+          <div class="prov-role-picker" id="provRolePicker">
+            <label class="prov-role-choice active" id="prc-Farmer" onclick="selectProvRole('Farmer')">
+              <input type="radio" name="provRole" value="Farmer" checked>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 22V12"/><path d="M12 16c-5 0-8-2.5-8-6.5 4.5 0 7.5 2 8 6.5Z" fill="currentColor" stroke="none" opacity=".3"/><path d="M12 12c.5-4.5 3.5-7 8-7 0 4-3 7-8 7Z" fill="currentColor" stroke="none" opacity=".5"/></svg>
+              <strong>Farmer (Seller)</strong>
+            </label>
+            <label class="prov-role-choice" id="prc-Buyer" onclick="selectProvRole('Buyer')">
+              <input type="radio" name="provRole" value="Buyer">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+              <strong>Buyer / Merchant</strong>
+            </label>
+          </div>
+
+          <!-- FULL NAME -->
+          <div class="form-group">
+            <label>Full Name</label>
+            <input type="text" id="crtName" placeholder="e.g. Juan Dela Cruz" required>
+          </div>
+
+          <!-- EMAIL OR MOBILE NUMBER -->
+          <div class="form-group">
+            <label>Email or Mobile Number</label>
+            <input type="text" id="crtEmail" placeholder="juan@anihan.ph or 09171234567" required>
+          </div>
+
+          <!-- PASSWORD -->
+          <div class="form-group">
+            <label>Password</label>
+            <input type="password" id="crtPass" placeholder="Enter password for account" required value="password123">
+            <label class="yeti-show-pw-toggle" style="margin-top:6px;display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);cursor:pointer">
+              <input type="checkbox" onchange="document.getElementById('crtPass').type = this.checked ? 'text' : 'password'"> Show password
+            </label>
+          </div>
+
+          <!-- ADDRESS / FARM LOCATION BOX IDENTICAL TO HOME -->
+          <div style="background:#fdfbf7;border:1.5px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px">
+            <div style="font-size:12px;font-weight:700;color:var(--ink);margin-bottom:8px;display:flex;align-items:center;gap:6px">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" style="color:var(--green)"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              Address / Farm Location
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+              <div class="form-group" style="margin-bottom:8px">
+                <label style="font-size:12px">Purok / Zone</label>
+                <input type="text" id="crtPurok" placeholder="e.g. Purok 4" oninput="updateCrtLocPreview()">
+              </div>
+              <div class="form-group" style="margin-bottom:8px">
+                <label style="font-size:12px">Barangay / Street / Landmark</label>
+                <input type="text" id="crtBarangay" placeholder="e.g. Brgy. San Roque" oninput="updateCrtLocPreview()">
+              </div>
+              <div class="form-group" style="margin-bottom:8px">
+                <label style="font-size:12px">Municipality / City</label>
+                <input type="text" id="crtMunicipality" placeholder="e.g. Guimba" value="Guimba" oninput="updateCrtLocPreview()">
+              </div>
+              <div class="form-group" style="margin-bottom:8px">
+                <label style="font-size:12px">Province</label>
+                <input type="text" id="crtProvince" placeholder="e.g. Nueva Ecija" value="Nueva Ecija" oninput="updateCrtLocPreview()">
+              </div>
+            </div>
+            <div style="background:#fff;border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:12px;color:var(--ink2);margin-top:2px">
+              <span style="color:var(--muted);font-size:11px;text-transform:uppercase;font-weight:700">Full Address: </span>
+              <span id="crtLocPreview" style="font-weight:700;color:var(--green)">Guimba, Nueva Ecija</span>
+            </div>
+          </div>
+
+          <!-- SPECIAL DESIGNATION / RSBSA NOTE -->
+          <div class="form-group" style="margin-bottom:14px">
+            <label style="font-size:12px">Special Designation / RSBSA Note <span style="font-weight:400;color:var(--muted)">(optional)</span></label>
+            <input type="text" id="crtNote" placeholder="e.g. Non-literate grower, RSBSA #03-49-08-004">
+          </div>
+
+          <div class="modal-foot" style="padding:16px 0 0;justify-content:flex-end">
+            <button class="btn btn-secondary" type="button" data-close-modal>Cancel</button>
+            <button class="btn btn-primary" type="submit">Complete Registration &amp; Approve</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div id="toastEl" class="toast-notif"></div>
+
+  <script>
+    var _user;
+    var _currFilter = 'all', _searchQ = '';
+    var _currentPage = 1;
+    var _pageSize = 10;
+    var _selectedProvRole = 'Farmer';
+
+    document.addEventListener('DOMContentLoaded', function(){
+      _user = requireAuth(['LGU Admin']);
+      if (!_user) return;
+
+      renderAccountsTable();
+
+      document.querySelectorAll('#roleTabs .filter-tab').forEach(function(b){
+        b.addEventListener('click', function(){
+          document.querySelectorAll('#roleTabs .filter-tab').forEach(function(x){ x.classList.remove('active'); });
+          b.classList.add('active');
+          _currFilter = b.getAttribute('data-filter');
+          _currentPage = 1; // Reset to page 1 on filter change
+          renderAccountsTable();
+        });
+      });
+
+      document.getElementById('searchInput').addEventListener('input', function(e){
+        _searchQ = e.target.value.toLowerCase().trim();
+        _currentPage = 1;
+        renderAccountsTable();
+      });
+    });
+
+    function getFilteredAccounts() {
+      var all = getAccounts();
+      return all.filter(function(a){
+        if (_currFilter === 'Farmer' && a.role !== 'Farmer') return false;
+        if (_currFilter === 'Buyer' && a.role !== 'Buyer') return false;
+        if (_currFilter === 'Ag Worker' && a.role !== 'Ag Worker') return false;
+        if (_currFilter === 'Pending Approval' && (a.status !== 'Pending Approval' && a.status !== 'Pending')) return false;
+        if (_currFilter === 'Active' && a.status !== 'Active') return false;
+        if (_currFilter === 'Suspended' && a.status !== 'Suspended') return false;
+        if (_currFilter === 'Disapproved' && a.status !== 'Disapproved') return false;
+        if (_currFilter === 'lowTech' && !(a.lowTech || a.assistedBy)) return false;
+
+        if (_searchQ) {
+          var str = (a.name + ' ' + a.id + ' ' + (a.phone||'') + ' ' + (a.email||'') + ' ' + (a.location||'') + ' ' + (a.note||'') + ' ' + a.role + ' ' + a.status).toLowerCase();
+          if (!str.includes(_searchQ)) return false;
+        }
+        return true;
+      });
+    }
+
+    function renderAccountsTable() {
+      var all = getAccounts();
+      var filtered = getFilteredAccounts();
+
+      var pendingCount = all.filter(function(a){ return a.status === 'Pending' || a.status === 'Pending Approval'; }).length;
+      var lowTechCount = all.filter(function(a){ return a.lowTech || a.assistedBy; }).length;
+
+      document.getElementById('stTotal').textContent = all.length;
+      document.getElementById('stFarmers').textContent = all.filter(function(a){ return a.role === 'Farmer'; }).length;
+      document.getElementById('stLowTech').textContent = lowTechCount;
+      document.getElementById('stBuyers').textContent = all.filter(function(a){ return a.role === 'Buyer'; }).length;
+      document.getElementById('stPending').textContent = pendingCount;
+
+      // PAGINATION CALCULATION
+      var totalItems = filtered.length;
+      var totalPages = Math.ceil(totalItems / _pageSize) || 1;
+      if (_currentPage > totalPages) _currentPage = totalPages;
+      if (_currentPage < 1) _currentPage = 1;
+
+      var startIndex = (_currentPage - 1) * _pageSize;
+      var endIndex = Math.min(startIndex + _pageSize, totalItems);
+      var pageItems = filtered.slice(startIndex, endIndex);
+
+      document.getElementById('recordCount').textContent = 'Showing ' + (totalItems === 0 ? 0 : startIndex + 1) + ' to ' + endIndex + ' of ' + totalItems + ' accounts';
+      document.getElementById('pageInfoText').textContent = 'Showing ' + (totalItems === 0 ? 0 : startIndex + 1) + ' to ' + endIndex + ' of ' + totalItems + ' accounts (Page ' + _currentPage + ' of ' + totalPages + ')';
+
+      renderPaginationControls(totalPages);
+
+      var tbody = document.getElementById('accountsTableBody');
+      if (pageItems.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--muted)">No accounts found matching filter or search query.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = pageItems.map(function(a){
+        var isFarmer = a.role === 'Farmer';
+        var isBuyer = a.role === 'Buyer';
+        var isActive = a.status === 'Active';
+        var isPending = a.status === 'Pending' || a.status === 'Pending Approval';
+        var isSuspended = a.status === 'Suspended';
+        var isDisapproved = a.status === 'Disapproved';
+
+        var statusClass = isActive ? 'status-active' : isPending ? 'status-pending' : 'status-suspended';
+
+        var isLowTechAssisted = a.lowTech || a.assistedBy;
+        var assistedBadge = isLowTechAssisted
+          ? '<span class="badge badge-both" style="font-size:9px;margin-top:4px" title="Low-tech grower assisted by Barangay Ag Worker">&#9997; Low-Tech (Ag Worker Assisted)</span>'
+          : '';
+
+        var sourceLabel = a.assistedBy
+          ? '<span style="font-size:11px;color:var(--ink2);font-weight:600">Assisted by ' + a.assistedBy + '</span>'
+          : '<span style="font-size:11px;color:var(--muted)">Self / Direct</span>';
+
+        // ONLY FARMERS HAVE APPROVE / DISAPPROVE ACTIONS
+        var farmerApprovalButtons = '';
+        if (isFarmer) {
+          if (isPending || isDisapproved || isSuspended) {
+            farmerApprovalButtons = '<button class="btn btn-sm btn-primary" onclick="setAccountStatus(\'' + a.id + '\',\'Active\')" title="Approve and activate farmer">&#10003; Approve</button>';
+          }
+          if (isActive || isPending) {
+            farmerApprovalButtons += '<button class="btn btn-sm btn-danger" onclick="setAccountStatus(\'' + a.id + '\',\'Disapproved\')" title="Disapprove farmer account">Disapprove</button>';
+          }
+        } else if (isBuyer) {
+          // BUYERS ONLY GET SUSPEND / REACTIVATE
+          if (isActive) {
+            farmerApprovalButtons = '<button class="btn btn-sm btn-secondary" onclick="setAccountStatus(\'' + a.id + '\',\'Suspended\')">Suspend</button>';
+          } else {
+            farmerApprovalButtons = '<button class="btn btn-sm btn-outline-green" onclick="setAccountStatus(\'' + a.id + '\',\'Active\')">Reactivate</button>';
+          }
+        }
+
+        return '<tr>' +
+          '<td>' +
+            '<strong>' + a.name + '</strong>' +
+            '<small style="display:block;color:var(--muted);font-size:11px">ID: ' + a.id + '</small>' +
+            assistedBadge +
+          '</td>' +
+          '<td><span class="cat-tag ' + (isFarmer ? 'cat-crop' : isBuyer ? 'cat-livestock' : 'cat-eggs') + '">' + a.role + '</span></td>' +
+          '<td style="font-size:13px">' +
+            '<div>' + (a.phone || '0917-000-0000') + '</div>' +
+            '<small style="color:var(--muted);font-size:11px">' + (a.email || '—') + '</small>' +
+          '</td>' +
+          '<td style="color:var(--muted);font-size:12px">' + (a.location || 'Guimba, Nueva Ecija') + '</td>' +
+          '<td style="font-size:12px;color:var(--ink2)">' + (a.note || '<span style="color:var(--muted)">—</span>') + '</td>' +
+          '<td>' + sourceLabel + '</td>' +
+          '<td>' +
+            '<span class="status-pill ' + statusClass + '">' + a.status + '</span>' +
+          '</td>' +
+          '<td style="text-align:right">' +
+            '<div style="display:inline-flex;gap:5px;flex-wrap:wrap;justify-content:flex-end">' +
+              farmerApprovalButtons +
+              '<button class="btn btn-sm btn-secondary" onclick="openEditAccountModal(\'' + a.id + '\')" title="Edit credentials and address">&#9998; Edit</button>' +
+              '<button class="btn btn-sm btn-danger" onclick="deleteAccountRecord(\'' + a.id + '\',\'' + a.name.replace(/'/g, "\\'") + '\')" title="Permanently delete record">Delete</button>' +
+            '</div>' +
+          '</td>' +
+        '</tr>';
+      }).join('');
+    }
+
+    function renderPaginationControls(totalPages) {
+      var c = document.getElementById('paginationControls');
+      if (!c) return;
+
+      var h = '';
+      h += '<button class="page-btn" onclick="goToPage(' + (_currentPage - 1) + ')" ' + (_currentPage === 1 ? 'disabled' : '') + '>&larr; Prev</button>';
+
+      for (var i = 1; i <= totalPages; i++) {
+        if (totalPages <= 7 || i === 1 || i === totalPages || (i >= _currentPage - 1 && i <= _currentPage + 1)) {
+          h += '<button class="page-btn ' + (i === _currentPage ? 'active' : '') + '" onclick="goToPage(' + i + ')">' + i + '</button>';
+        } else if (i === _currentPage - 2 || i === _currentPage + 2) {
+          h += '<span style="padding:0 4px;color:var(--muted)">...</span>';
+        }
+      }
+
+      h += '<button class="page-btn" onclick="goToPage(' + (_currentPage + 1) + ')" ' + (_currentPage === totalPages ? 'disabled' : '') + '>Next &rarr;</button>';
+      c.innerHTML = h;
+    }
+
+    function goToPage(p) {
+      _currentPage = p;
+      renderAccountsTable();
+    }
+
+    function changePageSize(size) {
+      _pageSize = parseInt(size, 10) || 10;
+      _currentPage = 1;
+      renderAccountsTable();
+    }
+
+    function setAccountStatus(id, newStatus) {
+      var accounts = getAccounts();
+      var acc = accounts.find(function(a){ return a.id === id; });
+      if (!acc) return;
+      acc.status = newStatus;
+      saveAccounts(accounts);
+      showToast('Farmer ' + acc.name + ' (' + id + ') updated to: ' + newStatus, newStatus === 'Active' ? 'success' : 'error');
+      renderAccountsTable();
+    }
+
+    function deleteAccountRecord(id, name) {
+      if (!confirm('CAUTION: Are you sure you want to permanently delete the account for ' + name + ' (ID: ' + id + ')? This will remove all municipal credentials and cannot be undone.')) {
+        return;
+      }
+      var accounts = getAccounts();
+      var idx = accounts.findIndex(function(a){ return a.id === id; });
+      if (idx === -1) return;
+
+      accounts.splice(idx, 1);
+      saveAccounts(accounts);
+      showToast('Account record for ' + name + ' was permanently deleted.', 'error');
+      renderAccountsTable();
+    }
+
+    function openEditAccountModal(id) {
+      var accounts = getAccounts();
+      var acc = accounts.find(function(a){ return a.id === id; });
+      if (!acc) return;
+
+      document.getElementById('editId').value = acc.id;
+      document.getElementById('editName').value = acc.name || '';
+      document.getElementById('editRole').value = acc.role || 'Farmer';
+      document.getElementById('editPhone').value = acc.phone || '';
+      document.getElementById('editEmail').value = acc.email || '';
+      document.getElementById('editStatus').value = acc.status || 'Active';
+      document.getElementById('editNote').value = acc.note || '';
+
+      document.getElementById('editPurok').value = acc.purok || '';
+      document.getElementById('editBarangay').value = acc.barangay || '';
+      document.getElementById('editMunicipality').value = acc.municipality || 'Guimba';
+      document.getElementById('editProvince').value = acc.province || 'Nueva Ecija';
+
+      openModal('editModal');
+    }
+
+    function saveEditedAccount(e) {
+      e.preventDefault();
+      var id = document.getElementById('editId').value;
+      var accounts = getAccounts();
+      var acc = accounts.find(function(a){ return a.id === id; });
+      if (!acc) return;
+
+      acc.name = document.getElementById('editName').value.trim();
+      acc.role = document.getElementById('editRole').value;
+      acc.phone = document.getElementById('editPhone').value.trim();
+      acc.email = document.getElementById('editEmail').value.trim();
+      acc.status = document.getElementById('editStatus').value;
+      acc.note = document.getElementById('editNote').value.trim();
+
+      var purok = document.getElementById('editPurok').value.trim();
+      var brgy  = document.getElementById('editBarangay').value.trim();
+      var muni  = document.getElementById('editMunicipality').value.trim();
+      var prov  = document.getElementById('editProvince').value.trim();
+
+      acc.purok = purok;
+      acc.barangay = brgy;
+      acc.municipality = muni;
+      acc.province = prov;
+      acc.location = [purok, brgy, muni, prov].filter(Boolean).join(', ') || acc.location;
+
+      saveAccounts(accounts);
+      closeModal('editModal');
+      showToast('\u2713 Credentials and profile updated for ' + acc.name, 'success');
+      renderAccountsTable();
+    }
+
+    // PROVISION ROLE CLICK HANDLER IDENTICAL TO HOME
+    function selectProvRole(role) {
+      _selectedProvRole = role;
+      document.querySelectorAll('.prov-role-choice').forEach(function(c){ c.classList.remove('active'); });
+      var map = { 'Farmer': 'prc-Farmer', 'Buyer': 'prc-Buyer' };
+      var el = document.getElementById(map[role]);
+      if (el) {
+        el.classList.add('active');
+        var inp = el.querySelector('input');
+        if (inp) inp.checked = true;
+      }
+      var muniInp = document.getElementById('crtMunicipality');
+      if (muniInp) {
+        muniInp.value = role === 'Buyer' ? 'Cabanatuan City' : 'Guimba';
+      }
+      updateCrtLocPreview();
+    }
+
+    function updateCrtLocPreview() {
+      var parts = [
+        (document.getElementById('crtPurok') || {}).value || '',
+        (document.getElementById('crtBarangay') || {}).value || '',
+        (document.getElementById('crtMunicipality') || {}).value || '',
+        (document.getElementById('crtProvince') || {}).value || ''
+      ].filter(function(s){ return s.trim(); });
+      var prev = document.getElementById('crtLocPreview');
+      if (prev) prev.textContent = parts.length ? parts.join(', ') : '—';
+    }
+
+    function openCreateAccountModal() {
+      document.getElementById('createForm').reset();
+      selectProvRole('Farmer');
+      updateCrtLocPreview();
+      openModal('createModal');
+    }
+
+    function saveNewAccount(e) {
+      e.preventDefault();
+      var role = _selectedProvRole || 'Farmer';
+      var name = document.getElementById('crtName').value.trim();
+      var emailInp = document.getElementById('crtEmail').value.trim();
+      var note = document.getElementById('crtNote').value.trim();
+
+      var purok = ((document.getElementById('crtPurok') || {}).value || '').trim();
+      var brgy  = ((document.getElementById('crtBarangay') || {}).value || '').trim();
+      var muni  = ((document.getElementById('crtMunicipality') || {}).value || 'Guimba').trim();
+      var prov  = ((document.getElementById('crtProvince') || {}).value || 'Nueva Ecija').trim();
+      var loc   = [purok, brgy, muni, prov].filter(Boolean).join(', ') || (role === 'Buyer' ? 'Cabanatuan City, Nueva Ecija' : 'Guimba, Nueva Ecija');
+
+      var phone = (emailInp.startsWith('09') || emailInp.startsWith('+63')) ? emailInp : '0917-000-0000';
+      var email = emailInp.includes('@') ? emailInp : (name.toLowerCase().replace(/[^a-z]/g, '') + '@anihan.ph');
+
+      var prefix = role === 'Farmer' ? 'F' : 'B';
+      var num = Math.floor(100 + Math.random() * 900);
+      var newId = prefix + num;
+
+      var newAcc = {
+        id: newId,
+        name: name,
+        role: role,
+        phone: phone,
+        email: email,
+        passCode: String(Math.floor(100000 + Math.random() * 900000)),
+        location: loc,
+        purok: purok,
+        barangay: brgy,
+        municipality: muni,
+        province: prov,
+        status: 'Active',
+        note: note || (role === 'Farmer' ? 'LGU Provisioned Farmer' : 'LGU Provisioned Buyer'),
+        registeredBy: 'LGU Admin',
+        assistedBy: null,
+        lowTech: false,
+        listings: 0,
+        orders: 0
+      };
+
+      var accounts = getAccounts();
+      accounts.unshift(newAcc);
+      saveAccounts(accounts);
+      closeModal('createModal');
+      showToast('\u2713 Account enrolled and approved for ' + name + ' (' + newId + ')', 'success');
+      renderAccountsTable();
+    }
+  </script>
+</body>
+</html>

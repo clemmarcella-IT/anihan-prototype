@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>LGU Admin Surveillance Dashboard — A.N.I.H.A.N.</title>
+  <link rel="stylesheet" href="../styles.css">
+  <script src="../app.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    .admin-hero{border-radius:16px;padding:34px;color:#fff;background:linear-gradient(135deg,#0c2815,#1b4f2c,#2d7342);margin-bottom:26px;position:relative;overflow:hidden;box-shadow:0 10px 30px rgba(12,40,21,.18)}
+    .admin-hero::after{content:'';position:absolute;right:-50px;top:-50px;width:280px;height:280px;background:rgba(255,255,255,.06);border-radius:50%}
+    .admin-hero h1{font-size:30px;font-weight:800;margin-bottom:8px;color:#fff}
+    .admin-hero p{font-size:14px;opacity:.92;max-width:680px;line-height:1.65}
+    .hero-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.28);border-radius:20px;padding:5px 14px;font-size:11px;font-weight:700;letter-spacing:.08em;margin-bottom:14px;text-transform:uppercase}
+    .quick-actions{display:flex;gap:12px;margin-top:24px;flex-wrap:wrap}
+    .quick-actions .btn{font-size:13px;padding:10px 20px;background:rgba(255,255,255,.18);color:#fff;border:1px solid rgba(255,255,255,.35);font-weight:600}
+    .quick-actions .btn:hover{background:rgba(255,255,255,.28)}
+
+    /* 3 GRAPHS GRID */
+    .graph-grid-3{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:22px;margin-bottom:28px}
+    .graph-card{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:22px;box-shadow:var(--shadow-s)}
+    .graph-card h3{font-size:15px;font-weight:800;margin-bottom:4px}
+    .graph-card p{font-size:12px;color:var(--muted);margin-bottom:16px}
+    .graph-card canvas{max-height:220px}
+
+    /* PENDING BADGE HIGHLIGHT */
+    .pulse-indicator{display:inline-block;width:8px;height:8px;border-radius:50%;background:#e07a14;margin-right:6px;animation:pulseDot 1.5s infinite}
+    @keyframes pulseDot{0%{transform:scale(.9);opacity:.8}50%{transform:scale(1.4);opacity:1}100%{transform:scale(.9);opacity:.8}}
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a href="index.html" class="brand">
+        <div class="brand-mark" style="background:#1b4f2c">
+          <svg viewBox="0 0 48 48" fill="none"><path d="M24 40V18" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><path d="M24 27c-9 0-14-4-14-11 8 0 13 3 14 11Z" fill="#EAA023"/><path d="M24 20c1-8 6-12 14-12 0 7-5 12-14 12Z" fill="currentColor"/></svg>
+        </div>
+        <div class="brand-text"><strong>A.N.I.H.A.N.</strong><small>LGU Municipal Agriculture Office</small></div>
+      </a>
+      <nav id="mainNav"></nav>
+      <div class="topbar-right">
+        <div id="userChip"></div>
+        <button id="logoutBtn">Log out</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="page-wrap">
+    <!-- HERO -->
+    <div class="admin-hero">
+      <div class="hero-badge">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/><path d="M15 9h4"/><path d="M15 15h4"/><path d="M5 9h2"/><path d="M5 15h2"/></svg>
+        Municipal Administration &bull; LGU Guimba, Nueva Ecija
+      </div>
+      <h1 id="welcomeGreeting">Municipal Harvest Monitoring &amp; Governance</h1>
+      <p>Centralized municipal oversight. Monitor the 3 over-harvest graphs to prevent crop waste, verify and approve farmer accounts, and keep harvest distribution fair and balanced across the municipality.</p>
+      <div class="quick-actions">
+        <button class="btn" onclick="window.location.href='accounts.html'" style="background:#f0c060;color:#222;font-weight:700">
+          <span class="pulse-indicator"></span>Review &amp; Approve Accounts (<span id="btnPendingCount">0</span>)
+        </button>
+        <button class="btn" onclick="window.location.href='graphs.html'">Detailed Over-Harvest Graphs &rarr;</button>
+        <button class="btn" onclick="window.location.href='orders.html'">All Municipal Distribution &rarr;</button>
+        <button class="btn" onclick="openSurplusModal()">Help Farmers with Extra Harvest</button>
+      </div>
+    </div>
+
+    <!-- STATS -->
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-label">Total Accounts</div>
+        <div class="stat-value" id="stAccounts">0</div>
+        <div class="stat-sub">growers, buyers &amp; extension workers</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Pending Approval</div>
+        <div class="stat-value" id="stPending" style="color:var(--gold)">0</div>
+        <div class="stat-sub">awaiting LGU verification</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Active Listings</div>
+        <div class="stat-value" id="stListings">0</div>
+        <div class="stat-sub">crops, livestock &amp; egg stocks</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Over-Harvest Warning</div>
+        <div class="stat-value" style="color:var(--red);font-size:24px">Kamatis &amp; Kalabasa</div>
+        <div class="stat-sub">+120% surplus over municipal demand</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Economic Turnover</div>
+        <div class="stat-value" id="stTurnover" style="font-size:22px;color:var(--green)">P0</div>
+        <div class="stat-sub">tracked order volume</div>
+      </div>
+    </div>
+
+    <!-- MUNICIPAL INTERVENTION ALERT BANNER -->
+    <div class="alert-banner alert-warn" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px;background:#fef3dc;border:1.5px solid #f6c86a;border-radius:12px;padding:16px 20px;margin-bottom:28px">
+      <div style="display:flex;align-items:flex-start;gap:12px;max-width:760px">
+        <span style="font-size:26px">🚨</span>
+        <div>
+          <strong style="color:#8a4d00;font-size:14px;display:block">EXTRA HARVEST ALERT: Too Many Tomatoes &amp; Squash Ready in Guimba</strong>
+          <span style="font-size:13px;color:#5a3804">Farmers have harvested <strong>6.2 tons</strong> more tomatoes and squash than usual buyers can take this week. The government is sending rolling store trucks and opening cold warehouse storage so crops do not spoil and farmer prices stay high.</span>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-sm btn-primary" onclick="triggerIntervention('Kadiwa Mobile Hub')">&#128666; Send Rolling Store Truck</button>
+        <button class="btn btn-sm btn-secondary" onclick="triggerIntervention('LGU Cold Storage')">&#10052; Store in Cold Warehouse</button>
+      </div>
+    </div>
+
+
+    <!-- 3 SURVEILLANCE GRAPHS -->
+    <div id="graphsSection" style="margin-bottom:28px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+        <div>
+          <div class="eyebrow">Real-Time Predictive Analytics</div>
+          <h2 style="font-size:22px;font-weight:800">The 3 Over-Harvest &amp; Market Surveillance Graphs</h2>
+        </div>
+        <a href="graphs.html" class="btn btn-sm btn-primary">Detailed Harvest Timeline &amp; Full Charts &rarr;</a>
+      </div>
+
+      <div class="graph-grid-3">
+        <!-- GRAPH 1: SUPPLY VS DEMAND -->
+        <div class="graph-card">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start">
+            <h3>Graph 1: Municipal Supply vs. Market Demand</h3>
+            <span class="status-pill status-suspended" style="font-size:10px">Glut Risk Detected</span>
+          </div>
+          <p>Compares municipal planting and readiness volume against forecasted buyer demand (in tons).</p>
+          <canvas id="chartSupplyDemand"></canvas>
+        </div>
+
+        <!-- GRAPH 2: SPOILAGE RISK -->
+        <div class="graph-card">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start">
+            <h3>Graph 2: Spoilage &amp; Post-Harvest Risk</h3>
+            <span class="status-pill status-pending" style="font-size:10px">Perishability Index</span>
+          </div>
+          <p>Assesses percentage of uncommitted inventory vulnerable to spoiling based on shelf-life.</p>
+          <canvas id="chartSpoilageRisk"></canvas>
+        </div>
+
+        <!-- GRAPH 3: PRICE VOLATILITY -->
+        <div class="graph-card">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start">
+            <h3>Graph 3: Farmgate Price Volatility Trend</h3>
+            <span class="status-pill status-active" style="font-size:10px">30-Day Floor Price</span>
+          </div>
+          <p>Monitors price plunges during glut seasons versus floor price protected through direct pre-orders.</p>
+          <canvas id="chartPriceVolatility"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toastEl" class="toast-notif"></div>
+
+  <script>
+    var _user;
+
+    document.addEventListener('DOMContentLoaded', function(){
+      _user = requireAuth(['LGU Admin']);
+      if (!_user) return;
+
+      loadDashboardData();
+      renderSurveillanceCharts();
+    });
+
+    function loadDashboardData() {
+      var accounts = getAccounts();
+      var listings = getListings();
+      var orders = getOrders();
+
+      var pending = accounts.filter(function(a){ return a.status === 'Pending' || a.status === 'Pending Approval'; });
+      var totalTurnover = orders.reduce(function(sum, o){
+        var n = Number(o.total);
+        return sum + (!isNaN(n) && n >= 0 ? n : 0);
+      }, 0);
+
+      document.getElementById('stAccounts').textContent = accounts.length;
+      document.getElementById('stPending').textContent = pending.length;
+      document.getElementById('btnPendingCount').textContent = pending.length;
+      document.getElementById('stListings').textContent = listings.length;
+      document.getElementById('stTurnover').textContent = 'P' + totalTurnover.toLocaleString('en-PH');
+    }
+
+    function triggerIntervention(action) {
+      showToast('\u2713 Municipal Action Executed: ' + action + ' successfully authorized for Guimba sector.', 'success');
+    }
+
+    function openSurplusModal() {
+      var act = prompt('Enter Municipal Intervention Directive (e.g., Kadiwa Truck Route, Cold Storage Subsidy, Institutional Buyer Match):', 'Kadiwa Pop-up Center in Poblacion Market');
+      if (act) {
+        showToast('Intervention logged & dispatched: ' + act, 'success');
+      }
+    }
+
+    function renderSurveillanceCharts() {
+      // 1. Supply vs Demand
+      var c1 = document.getElementById('chartSupplyDemand');
+      if (c1) {
+        new Chart(c1, {
+          type: 'bar',
+          data: {
+            labels: ['Kamatis', 'Kalabasa', 'Talong', 'Sibuyas', 'Native Pig', 'Eggs (trays)'],
+            datasets: [
+              { label: 'Supply (Tons / Heads)', data: [14.2, 9.8, 6.1, 8.4, 28, 520], backgroundColor: '#c0392b' },
+              { label: 'Demand (Tons / Heads)', data: [6.4, 4.2, 5.8, 7.9, 25, 480], backgroundColor: '#2e6f40' }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } } },
+            scales: { y: { beginAtZero: true, grid: { color: '#f0ede6' } }, x: { grid: { display: false } } }
+          }
+        });
+      }
+
+      // 2. Spoilage Risk
+      var c2 = document.getElementById('chartSpoilageRisk');
+      if (c2) {
+        new Chart(c2, {
+          type: 'doughnut',
+          data: {
+            labels: ['Critical Spoilage (Kamatis)', 'Moderate Risk (Kalabasa)', 'Stable (Live Cattle/Pig)', 'Cured & Dry (Sibuyas)'],
+            datasets: [{
+              data: [42, 28, 18, 12],
+              backgroundColor: ['#c0392b', '#e07a14', '#2e6f40', '#2563a8']
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 10 } } } }
+          }
+        });
+      }
+
+      // 3. Price Volatility
+      var c3 = document.getElementById('chartPriceVolatility');
+      if (c3) {
+        new Chart(c3, {
+          type: 'line',
+          data: {
+            labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4 (Glut Peak)', 'Week 5 (Intervention)'],
+            datasets: [
+              { label: 'Without A.N.I.H.A.N. (Middleman Dump)', data: [55, 42, 28, 14, 18], borderColor: '#c0392b', borderDash: [5, 5], fill: false },
+              { label: 'With Platform Contract Pre-Orders', data: [55, 52, 48, 45, 46], borderColor: '#2e6f40', backgroundColor: 'rgba(46,111,64,.1)', fill: true }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 10 } } } },
+            scales: { y: { beginAtZero: true, grid: { color: '#f0ede6' } }, x: { grid: { display: false } } }
+          }
+        });
+      }
+    }
+  </script>
+</body>
+</html>

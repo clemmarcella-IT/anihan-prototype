@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Messages &amp; Direct Farmer Chat — A.N.I.H.A.N.</title>
+  <link rel="stylesheet" href="../styles.css">
+  <script src="../app.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a href="index.html" class="brand">
+        <div class="brand-mark"><svg viewBox="0 0 48 48" fill="none"><path d="M24 40V18" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><path d="M24 27c-9 0-14-4-14-11 8 0 13 3 14 11Z" fill="#EAA023"/><path d="M24 20c1-8 6-12 14-12 0 7-5 12-14 12Z" fill="currentColor"/></svg></div>
+        <div class="brand-text"><strong>A.N.I.H.A.N.</strong><small>Buyer Portal</small></div>
+      </a>
+      <nav id="mainNav"></nav>
+      <div class="topbar-right">
+        <div id="userChip"></div>
+        <button id="logoutBtn">Log out</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="page-wrap">
+    <div class="page-header" style="margin-bottom:20px">
+      <div class="eyebrow">Communication Center</div>
+      <h1>Messages &amp; Direct Farmer Chat</h1>
+      <p>Coordinate harvest timings, farm-gate pickup schedules, and delivery updates directly with local producers.</p>
+    </div>
+
+    <div class="chat-inbox-grid">
+      <!-- SIDEBAR THREADS -->
+      <aside class="chat-threads-sidebar">
+        <div class="chat-threads-head">
+          <span>Active Order Chats</span>
+        </div>
+        <div class="chat-thread-list" id="threadsList">
+          <!-- Populated by JS -->
+        </div>
+      </aside>
+
+      <!-- MAIN CHAT AREA -->
+      <section class="chat-main-area" id="chatMainArea">
+        <div class="chat-main-head" id="chatHeader">
+          <div>
+            <strong id="headName" style="font-size:15px;color:var(--ink);display:block">Select a conversation</strong>
+            <small id="headDetails" style="font-size:12px;color:var(--muted)">Choose an order from the list on the left</small>
+          </div>
+          <div id="headActions" style="display:flex;align-items:center;gap:10px"></div>
+        </div>
+
+        <div class="chat-main-msgs" id="chatMsgsList">
+          <div style="margin:auto;text-align:center;color:var(--muted);padding:40px">
+            Select an order to open the direct chat stream with the farmer.
+          </div>
+        </div>
+
+        <form class="chat-main-input-bar" id="chatInputBar" onsubmit="handleSend(event)" style="display:none">
+          <input type="text" id="chatTextInput" placeholder="Type a message to the farmer..." required style="flex:1;padding:10px 16px;border:1.5px solid var(--border);border-radius:8px;font-size:14px">
+          <button class="btn btn-primary" type="submit">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+            Send
+          </button>
+        </form>
+      </section>
+    </div>
+  </div>
+
+  <div id="toastEl" class="toast-notif"></div>
+
+  <script>
+    var _user;
+    var _activeOrderId = null;
+
+    document.addEventListener('DOMContentLoaded', function(){
+      _user = requireAuth(['Buyer']);
+      if (!_user) return;
+
+      var urlParams = new URLSearchParams(window.location.search);
+      var queryOrderId = urlParams.get('orderId');
+
+      loadThreads(queryOrderId);
+    });
+
+    function getBuyerOrdersList() {
+      return getOrders().filter(function(o){ return o.buyerId === _user.id; });
+    }
+
+    function loadThreads(preferredOrderId) {
+      var orders = getBuyerOrdersList();
+      var c = document.getElementById('threadsList');
+
+      if (orders.length === 0) {
+        c.innerHTML = '<div style="padding:24px 16px;color:var(--muted);font-size:13px;text-align:center">No active or past orders found. Pre-order produce to chat with farmers.</div>';
+        return;
+      }
+
+      var defaultId = preferredOrderId || orders[0].id;
+
+      c.innerHTML = orders.map(function(o){
+        var msgs = getChatMessages(o.id);
+        var lastMsg = msgs.length > 0 ? msgs[msgs.length - 1].msg : 'No messages yet';
+        var farmerPhone = o.farmerPhone || '0917-889-2101';
+        var isActive = o.id === defaultId;
+
+        return '<div class="chat-thread-item ' + (isActive ? 'active' : '') + '" onclick="selectThread(\'' + o.id + '\')">' +
+          '<img class="chat-thread-av" src="' + o.itemPhoto + '" alt="' + o.itemName + '">' +
+          '<div class="chat-thread-info">' +
+            '<strong>' + o.farmer + '</strong>' +
+            '<small style="color:var(--ink2)">#' + o.id + ' &bull; ' + o.itemName + '</small>' +
+            '<small style="color:var(--green);font-weight:600">Tel: ' + farmerPhone + '</small>' +
+            '<small>' + lastMsg + '</small>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+
+      selectThread(defaultId);
+    }
+
+    function selectThread(orderId) {
+      _activeOrderId = orderId;
+      var orders = getBuyerOrdersList();
+      var o = orders.find(function(x){ return x.id === orderId; });
+      if (!o) return;
+
+      // Update sidebar active classes
+      document.querySelectorAll('.chat-thread-item').forEach(function(el){
+        el.classList.remove('active');
+      });
+      var activeEl = Array.from(document.querySelectorAll('.chat-thread-item')).find(function(el){
+        return el.innerHTML.indexOf('#' + orderId) !== -1;
+      });
+      if (activeEl) activeEl.classList.add('active');
+
+      var farmerPhone = o.farmerPhone || '0917-889-2101';
+      var buyerPhone = o.buyerPhone || _user.phone || '0918-554-3209';
+
+      document.getElementById('headName').textContent = o.farmer + ' (' + o.itemName + ')';
+      document.getElementById('headDetails').innerHTML = 'Order #' + o.id + ' &bull; Farmer Phone: <strong style="color:var(--green)">' + farmerPhone + '</strong> &bull; Buyer Phone: <strong>' + buyerPhone + '</strong> &bull; ' + (o.status === 'cancelled' ? '<span style="color:#c0392b;font-weight:700">Cancelled</span>' : 'Active');
+
+      document.getElementById('headActions').innerHTML =
+        '<a href="tel:' + farmerPhone + '" class="btn btn-secondary btn-sm" style="display:inline-flex;align-items:center;gap:6px">' +
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>' +
+          ' Call Farmer' +
+        '</a>' +
+        '<a href="orders.html" class="btn btn-secondary btn-sm">View Order</a>';
+
+      document.getElementById('chatInputBar').style.display = 'flex';
+      renderThreadMessages();
+    }
+
+    function renderThreadMessages() {
+      if (!_activeOrderId) return;
+      var orders = getBuyerOrdersList();
+      var o = orders.find(function(x){ return x.id === _activeOrderId; });
+      var farmerPhone = (o && o.farmerPhone) || '0917-889-2101';
+      var buyerPhone = (o && o.buyerPhone) || _user.phone || '0918-554-3209';
+
+      var msgs = getChatMessages(_activeOrderId);
+      var c = document.getElementById('chatMsgsList');
+
+      if (msgs.length === 0) {
+        c.innerHTML = '<div style="margin:auto;text-align:center;color:var(--muted);padding:40px">No messages yet. Send a note to the farmer regarding delivery or pick-up instructions.</div>';
+        return;
+      }
+
+      c.innerHTML = msgs.map(function(m){
+        var isMine = m.from === 'buyer';
+        var senderLabel = isMine
+          ? 'You (Buyer &bull; ' + buyerPhone + ')'
+          : (m.name || 'Farmer') + ' &bull; Tel: ' + farmerPhone;
+
+        return '<div class="chat-msg ' + (isMine ? 'mine' : 'theirs') + '" style="margin-bottom:8px">' +
+          '<div class="chat-msg-name">' + senderLabel + '</div>' +
+          '<div>' + m.msg + '</div>' +
+        '</div>';
+      }).join('');
+
+      c.scrollTop = c.scrollHeight;
+    }
+
+    function handleSend(e) {
+      e.preventDefault();
+      var inp = document.getElementById('chatTextInput');
+      var txt = inp.value.trim();
+      if (!txt || !_activeOrderId) return;
+
+      appendChatMessage(_activeOrderId, {
+        from: 'buyer',
+        name: _user.name,
+        msg: txt
+      });
+
+      inp.value = '';
+      renderThreadMessages();
+
+      // Simulated auto-reply
+      setTimeout(function(){
+        var msgs = getChatMessages(_activeOrderId);
+        if (msgs.length <= 4) {
+          appendChatMessage(_activeOrderId, {
+            from: 'farmer',
+            name: 'Farmer Partner',
+            msg: 'Salamat sa mensahe! Naka-note na po sa aming harvest logbook.'
+          });
+          renderThreadMessages();
+        }
+      }, 1200);
+    }
+  </script>
+</body>
+</html>

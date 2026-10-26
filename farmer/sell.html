@@ -1,0 +1,586 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Sales &amp; Listings — Farmer Portal — A.N.I.H.A.N.</title>
+  <link rel="stylesheet" href="../styles.css">
+  <script src="../app.js" defer></script>
+  <style>
+    .sell-hero{background:linear-gradient(120deg,#1a4d2b,#2e6f40);padding:32px 28px;color:#fff}
+    .sell-hero h1{font-size:26px;font-weight:800;margin-bottom:6px}
+    .sell-hero p{font-size:14px;opacity:.9}
+    .type-picker{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+    .type-choice{border:1.5px solid var(--border);border-radius:8px;padding:12px 10px;text-align:center;cursor:pointer;transition:all .18s;font-size:12px;font-weight:700;color:var(--muted);background:#fff}
+    .type-choice:hover{border-color:var(--green);color:var(--green)}
+    .type-choice.active{border-color:var(--green);background:var(--green-soft);color:var(--green)}
+    .fulfillment-picker{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+    .fc-choice{border:1.5px solid var(--border);border-radius:8px;padding:10px 8px;text-align:center;cursor:pointer;transition:all .18s;font-size:12px;font-weight:700;color:var(--ink2);background:#fff}
+    .fc-choice:hover{border-color:var(--green)}
+    .fc-choice.active{border-color:var(--green);background:var(--green-soft);color:var(--green)}
+    .listing-card{background:var(--white);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow-s);overflow:hidden;display:flex;align-items:stretch;margin-bottom:16px}
+    .listing-card-img{width:140px;object-fit:cover;flex-shrink:0;background:#eee}
+    .listing-card-body{padding:18px;flex:1;display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap}
+    .listing-card-info{flex:1;min-width:200px}
+    .listing-card-actions{display:flex;flex-direction:column;gap:8px;min-width:110px}
+    .img-preview{width:100%;height:150px;object-fit:cover;border-radius:8px;border:1px solid var(--border);background:#f4f4f4;margin-top:8px}
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a href="index.html" class="brand">
+        <div class="brand-mark"><svg viewBox="0 0 48 48" fill="none"><path d="M24 40V18" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><path d="M24 27c-9 0-14-4-14-11 8 0 13 3 14 11Z" fill="#EAA023"/><path d="M24 20c1-8 6-12 14-12 0 7-5 12-14 12Z" fill="currentColor"/></svg></div>
+        <div class="brand-text"><strong>A.N.I.H.A.N.</strong><small>Farmer Portal</small></div>
+      </a>
+      <nav id="mainNav"></nav>
+      <div class="topbar-right">
+        <div id="userChip"></div>
+        <button id="logoutBtn">Log out</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="sell-hero">
+    <div style="max-width:1280px;margin:0 auto;padding:0 28px">
+      <div class="eyebrow" style="color:rgba(255,255,255,.8);margin-bottom:8px">Sales &amp; Listings Management</div>
+      <h1>Sell Your Harvest, Animals &amp; Eggs</h1>
+      <p>Register what you produce &mdash; whether vegetables, Brahman cattle, native pigs, goats, or farm eggs. Set clear Pick-up and Delivery options for buyers.</p>
+    </div>
+  </div>
+
+  <div class="page-wrap">
+    <!-- TOP HEADER -->
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px;margin-bottom:20px">
+      <div>
+        <h2 style="font-size:22px;font-weight:800">My Farm Inventory</h2>
+        <p style="color:var(--muted);font-size:13px">Listings currently live on the Central Luzon marketplace</p>
+      </div>
+      <button class="btn btn-primary btn-lg" onclick="openAddListingModal()">+ Add New Produce / Livestock</button>
+    </div>
+
+    <!-- PROMINENT AG WORKER CONSULTATION CALLOUT -->
+    <div style="background:#fff7e6;border:1.5px solid #e5a01c;border-radius:12px;padding:14px 18px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
+      <div style="display:flex;align-items:center;gap:12px">
+        <span style="font-size:24px">&#128222;</span>
+        <div>
+          <strong style="color:#5a3804;font-size:13px">Barangay Ag Worker Assistance for Listings &amp; Pricing</strong>
+          <span style="display:block;font-size:12px;color:#7a4f09">Need help encoding crop weights, setting farmgate prices, or taking livestock photos? Call or text your Extension Worker: <strong>Enrique Dizon</strong></span>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <a href="tel:09193328819" style="background:#2e6f40;color:#fff;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:800;text-decoration:none;display:inline-flex;align-items:center;gap:6px">
+          &#128222; Call 0919-332-8819
+        </a>
+        <a href="sms:09193328819" class="btn btn-secondary btn-sm" style="border-color:#e5a01c;color:#7a4f09;font-weight:700">
+          SMS
+        </a>
+      </div>
+    </div>
+
+    <!-- STATS ROW -->
+    <div class="stat-grid" style="margin-bottom:24px">
+      <div class="stat-card">
+        <div class="stat-label">Total Listings</div>
+        <div class="stat-value" id="stTotal">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Active / Live</div>
+        <div class="stat-value" id="stActive" style="color:var(--green)">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Crops</div>
+        <div class="stat-value" id="stCrops">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Livestock (Animals)</div>
+        <div class="stat-value" id="stLive">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Eggs &amp; Poultry</div>
+        <div class="stat-value" id="stEggs">0</div>
+      </div>
+    </div>
+
+    <!-- FILTER TABS -->
+    <div class="filter-bar">
+      <div class="filter-tabs" id="typeTabs">
+        <button class="filter-tab active" data-type="all">All My Listings</button>
+        <button class="filter-tab" data-type="crop">Crops Only</button>
+        <button class="filter-tab" data-type="livestock">Livestock (Cattle, Pigs, Goats)</button>
+        <button class="filter-tab" data-type="eggs">Eggs &amp; Poultry</button>
+      </div>
+    </div>
+
+    <!-- LISTINGS CONTAINER -->
+    <div id="listingsListContainer"></div>
+  </div>
+
+  <!-- ADD / EDIT LISTING MODAL -->
+  <div class="modal-backdrop hidden" id="listingModal">
+    <div class="modal-box" style="max-width:580px">
+      <div class="modal-head">
+        <h2 id="modalHeadTitle">Add New Listing</h2>
+        <button class="modal-close" data-close-modal>&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="listingForm" onsubmit="saveListingForm(event)">
+          <!-- TYPE SELECTION -->
+          <div class="form-group">
+            <label>1. What are you selling?</label>
+            <div class="type-picker" id="typePicker">
+              <div class="type-choice active" data-t="crop" onclick="selectType('crop')">
+                <strong>Crops</strong>
+                <small style="display:block;color:var(--muted);margin-top:2px">Vegetables &amp; Fruits</small>
+              </div>
+              <div class="type-choice" data-t="livestock" onclick="selectType('livestock')">
+                <strong>Livestock</strong>
+                <small style="display:block;color:var(--muted);margin-top:2px">Cattle, Pigs, Goats</small>
+              </div>
+              <div class="type-choice" data-t="eggs" onclick="selectType('eggs')">
+                <strong>Eggs &amp; Poultry</strong>
+                <small style="display:block;color:var(--muted);margin-top:2px">Chicken, Duck, Balut</small>
+              </div>
+            </div>
+          </div>
+
+          <!-- NAMES -->
+          <div class="form-row">
+            <div class="form-group">
+              <label>Tagalog / Local Name</label>
+              <input type="text" id="itemName" placeholder="e.g. Kamatis (Diamante Max) or Batangas Cattle" required>
+            </div>
+            <div class="form-group">
+              <label>English / Market Name</label>
+              <input type="text" id="itemEng" placeholder="e.g. Tomatoes or Live Steer">
+            </div>
+          </div>
+
+          <!-- CATEGORY & UNIT -->
+          <div class="form-row">
+            <div class="form-group">
+              <label>Category</label>
+              <select id="itemCat">
+                <option value="Vegetables">Vegetables</option>
+                <option value="Fruits">Fruits</option>
+                <option value="Cattle">Cattle / Cow / Baka</option>
+                <option value="Swine">Swine / Pig / Baboy</option>
+                <option value="Goat">Goat / Kambing</option>
+                <option value="Poultry">Poultry / Manok</option>
+                <option value="Eggs">Eggs / Itlog</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Unit of Sale</label>
+              <select id="itemUnit">
+                <option value="kg">kg (Kilogram)</option>
+                <option value="head">head (Bawat Ulo / Live)</option>
+                <option value="tray (30 pcs)">tray (30 pcs)</option>
+                <option value="piece">piece (Bawat Piraso)</option>
+                <option value="sack (50kg)">sack (50kg)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- QUANTITY & PRICE -->
+          <div class="form-row">
+            <div class="form-group">
+              <label>Total Harvest / Stock Quantity</label>
+              <input type="number" id="itemTotal" min="1" placeholder="e.g. 1000" required>
+            </div>
+            <div class="form-group">
+              <label>Farmgate Price per Unit (PHP)</label>
+              <input type="number" id="itemPrice" min="1" placeholder="e.g. 45" required>
+            </div>
+          </div>
+
+          <!-- ESTIMATED DATE & HARVEST WINDOW -->
+          <div class="form-row">
+            <div class="form-group">
+              <label>Estimated Harvest / Availability Date <span style="color:var(--green)">*</span></label>
+              <input type="date" id="itemEstDate" required onchange="onEstDateChange()">
+            </div>
+            <div class="form-group">
+              <label>Estimated Readiness Window / Notes</label>
+              <input type="text" id="itemHarvestDate" placeholder="e.g. Nov 20 - Dec 5, 2026 or Daily Harvest" required>
+            </div>
+          </div>
+
+          <!-- FULFILLMENT MODE -->
+          <div class="form-group">
+            <label>2. Fulfillment Mode for Buyers</label>
+            <div class="fulfillment-picker" id="fcPicker">
+              <div class="fc-choice" data-f="Pick-up" onclick="selectFulfillChoice('Pick-up')">
+                <strong>Pick-up Only</strong>
+                <small style="display:block;color:var(--muted);margin-top:2px">Farm gate</small>
+              </div>
+              <div class="fc-choice" data-f="Delivery" onclick="selectFulfillChoice('Delivery')">
+                <strong>Delivery Only</strong>
+                <small style="display:block;color:var(--muted);margin-top:2px">Farmer ships</small>
+              </div>
+              <div class="fc-choice active" data-f="Both" onclick="selectFulfillChoice('Both')">
+                <strong>Both Pick-up &amp; Delivery</strong>
+                <small style="display:block;color:var(--muted);margin-top:2px">Buyer choice</small>
+              </div>
+            </div>
+          </div>
+
+          <!-- ADDRESS & DELIVERY NOTES -->
+          <div class="form-group" id="pickupGroup">
+            <label>Farm Gate Pick-up Address (Where buyer will pick up)</label>
+            <input type="text" id="itemPickup" placeholder="e.g. Purok 4, Brgy. San Roque, Guimba, Nueva Ecija">
+          </div>
+          <div class="form-group" id="delivGroup">
+            <label>Delivery Terms / Coverage</label>
+            <input type="text" id="itemDelivNotes" placeholder="e.g. Free delivery within Guimba; P50-100 nearby towns.">
+          </div>
+
+          <!-- PHOTO PRESET / URL -->
+          <div class="form-group">
+            <label>Photo URL (or choose preset)</label>
+            <input type="url" id="itemPhoto" placeholder="https://images.unsplash.com/..." oninput="updatePhotoPreview(this.value)">
+            <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap">
+              <button class="btn btn-sm btn-secondary" type="button" onclick="setPresetPhoto('crop')">Preset Tomato</button>
+              <button class="btn btn-sm btn-secondary" type="button" onclick="setPresetPhoto('cattle')">Preset Cattle</button>
+              <button class="btn btn-sm btn-secondary" type="button" onclick="setPresetPhoto('pig')">Preset Native Pig</button>
+              <button class="btn btn-sm btn-secondary" type="button" onclick="setPresetPhoto('eggs')">Preset Native Eggs</button>
+            </div>
+            <img id="photoPreview" class="img-preview" src="https://images.unsplash.com/photo-1546094096-0df4bcaaa337?w=600&q=80" alt="Preview">
+          </div>
+
+          <!-- DETAILS -->
+          <div class="form-group">
+            <label>Product Details &amp; Health / Vet Certifications</label>
+            <textarea id="itemDetails" placeholder="Describe variety, fertilization, deworming, weight, or packaging..."></textarea>
+          </div>
+
+          <div class="modal-foot" style="padding:16px 0 0;justify-content:flex-end">
+            <button class="btn btn-secondary" type="button" data-close-modal>Cancel</button>
+            <button class="btn btn-primary" type="submit" id="saveListingBtn">Save &amp; Publish Listing</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div id="toastEl" class="toast-notif"></div>
+
+  <script>
+    var _user;
+    var _currType = 'all';
+    var _editingId = null;
+    var _selectedType = 'crop';
+    var _selectedFulfill = 'Both';
+
+    var PRESETS = {
+      crop: 'https://images.unsplash.com/photo-1546094096-0df4bcaaa337?w=600&q=80',
+      cattle: 'https://images.unsplash.com/photo-1516467508483-a7212febe31a?w=600&q=80',
+      pig: 'https://images.unsplash.com/photo-1548681528-6a5c45dbe38f?w=600&q=80',
+      eggs: 'https://images.unsplash.com/photo-1582722872445-44dc5f7e3c8f?w=600&q=80'
+    };
+
+    document.addEventListener('DOMContentLoaded', function(){
+      _user = requireAuth(['Farmer']);
+      if (!_user) return;
+
+      renderFarmerListings();
+
+      document.querySelectorAll('#typeTabs .filter-tab').forEach(function(b){
+        b.addEventListener('click', function(){
+          document.querySelectorAll('#typeTabs .filter-tab').forEach(function(x){ x.classList.remove('active'); });
+          b.classList.add('active');
+          _currType = b.getAttribute('data-type');
+          renderFarmerListings();
+        });
+      });
+    });
+
+    function getFarmerListings() {
+      var all = getListings().filter(function(l){ return l.farmerId === _user.id; });
+      if (_currType !== 'all') {
+        return all.filter(function(l){ return l.type === _currType; });
+      }
+      return all;
+    }
+
+    function renderFarmerListings() {
+      var all = getListings().filter(function(l){ return l.farmerId === _user.id; });
+      var list = getFarmerListings();
+
+      // Stats
+      document.getElementById('stTotal').textContent = all.length;
+      document.getElementById('stActive').textContent = all.filter(function(l){ return l.status === 'active'; }).length;
+      document.getElementById('stCrops').textContent = all.filter(function(l){ return l.type === 'crop'; }).length;
+      document.getElementById('stLive').textContent = all.filter(function(l){ return l.type === 'livestock'; }).length;
+      document.getElementById('stEggs').textContent = all.filter(function(l){ return l.type === 'eggs'; }).length;
+
+      var c = document.getElementById('listingsListContainer');
+      if (list.length === 0) {
+        c.innerHTML = '<div style="background:#fff;border-radius:12px;border:1px solid var(--border);padding:60px 20px;text-align:center;color:var(--muted)">' +
+          '<h3 style="font-size:18px;color:var(--ink);margin-bottom:6px">No listings under this category</h3>' +
+          '<p>Click below to register your harvest, cattle, pigs, or fresh eggs.</p>' +
+          '<button class="btn btn-primary" onclick="openAddListingModal()" style="margin-top:14px">+ Add First Listing</button>' +
+        '</div>';
+        return;
+      }
+
+      c.innerHTML = list.map(function(item){
+        var pct = Math.round((item.available / item.total) * 100);
+        return '<div class="listing-card">' +
+          '<img class="listing-card-img" src="' + item.photo + '" alt="' + item.name + '">' +
+          '<div class="listing-card-body">' +
+            '<div class="listing-card-info">' +
+              '<div style="display:flex;align-items:center;gap:8px">' +
+                '<h3 style="font-size:16px;font-weight:700">' + item.name + '</h3>' +
+                getCategoryTag(item.type) +
+                (item.status === 'active' ? '<span class="status-pill status-active">Active</span>' : '<span class="status-pill status-suspended">Inactive</span>') +
+              '</div>' +
+              '<div style="font-size:12px;color:var(--muted);margin-top:2px">' + (item.english || '') + ' &bull; Category: ' + item.category + '</div>' +
+              '<div style="display:flex;gap:6px;margin:8px 0;flex-wrap:wrap">' +
+                getFulfillmentBadge(item.fulfillment) +
+                renderStars(item.rating) +
+              '</div>' +
+              '<div style="font-size:12px;color:var(--ink2);margin-top:4px">' +
+                '<strong>' + item.available + ' ' + item.unit + '</strong> available out of <strong>' + item.total + ' ' + item.unit + '</strong>' +
+              '</div>' +
+              '<div style="margin-top:6px;height:5px;background:var(--border);border-radius:3px;overflow:hidden;max-width:260px">' +
+                '<div style="width:' + pct + '%;height:100%;background:var(--green)"></div>' +
+              '</div>' +
+              '<div style="font-size:11px;color:var(--muted);margin-top:6px">' +
+                'Harvest / Readiness: <strong>' + item.harvestDate + '</strong>' +
+              '</div>' +
+            '</div>' +
+
+            '<div style="text-align:right;min-width:130px">' +
+              '<small style="color:var(--muted);font-size:11px">Farmgate Price</small>' +
+              '<strong style="font-size:22px;color:var(--green);display:block">P' + item.price.toLocaleString('en-PH') + '</strong>' +
+              '<small style="color:var(--muted);font-size:11px">per ' + item.unit + '</small>' +
+            '</div>' +
+
+            '<div class="listing-card-actions">' +
+              '<button class="btn btn-sm btn-secondary" onclick="openEditListingModal(' + item.id + ')">Edit Listing</button>' +
+              '<button class="btn btn-sm btn-ghost" onclick="toggleListingStatus(' + item.id + ')">' + (item.status==='active'?'Deactivate':'Activate') + '</button>' +
+              '<button class="btn btn-sm btn-danger" style="padding:4px 8px;font-size:11px" onclick="deleteListing(' + item.id + ')">Delete</button>' +
+            '</div>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+    }
+
+    function selectType(t) {
+      _selectedType = t;
+      document.querySelectorAll('#typePicker .type-choice').forEach(function(c){
+        c.classList.toggle('active', c.getAttribute('data-t') === t);
+      });
+      var cat = document.getElementById('itemCat');
+      var unit = document.getElementById('itemUnit');
+      if (t === 'crop') {
+        cat.value = 'Vegetables';
+        unit.value = 'kg';
+        setPresetPhoto('crop');
+      } else if (t === 'livestock') {
+        cat.value = 'Cattle';
+        unit.value = 'head';
+        setPresetPhoto('cattle');
+      } else {
+        cat.value = 'Eggs';
+        unit.value = 'tray (30 pcs)';
+        setPresetPhoto('eggs');
+      }
+    }
+
+    function selectFulfillChoice(f) {
+      _selectedFulfill = f;
+      document.querySelectorAll('#fcPicker .fc-choice').forEach(function(c){
+        c.classList.toggle('active', c.getAttribute('data-f') === f);
+      });
+    }
+
+    function setPresetPhoto(p) {
+      var url = PRESETS[p] || PRESETS.crop;
+      document.getElementById('itemPhoto').value = url;
+      updatePhotoPreview(url);
+    }
+
+    function updatePhotoPreview(url) {
+      document.getElementById('photoPreview').src = url || PRESETS.crop;
+    }
+
+    function onEstDateChange() {
+      var v = document.getElementById('itemEstDate').value;
+      if (!v) return;
+      var d = new Date(v + 'T00:00:00');
+      if (!isNaN(d.getTime())) {
+        var monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        var formatted = monthNames[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear();
+        document.getElementById('itemHarvestDate').value = formatted;
+      }
+    }
+
+    function openAddListingModal() {
+      _editingId = null;
+      document.getElementById('modalHeadTitle').textContent = 'Add New Listing';
+      document.getElementById('saveListingBtn').textContent = 'Save & Publish Listing';
+      document.getElementById('listingForm').reset();
+      selectType('crop');
+      selectFulfillChoice('Both');
+      document.getElementById('itemPickup').value = _user.location ? 'Purok 4, Brgy. San Roque, ' + _user.location : '';
+      document.getElementById('itemDelivNotes').value = 'Free delivery within Guimba; P50 nearby.';
+      setPresetPhoto('crop');
+
+      // Default estimated date to 7 days from now
+      var defDate = new Date();
+      defDate.setDate(defDate.getDate() + 7);
+      var iso = defDate.toISOString().split('T')[0];
+      var estInp = document.getElementById('itemEstDate');
+      if (estInp) estInp.value = iso;
+      var monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      var formatted = monthNames[defDate.getMonth()] + ' ' + defDate.getDate() + ', ' + defDate.getFullYear();
+      document.getElementById('itemHarvestDate').value = formatted;
+
+      openModal('listingModal');
+    }
+
+    function openEditListingModal(id) {
+      var item = getListings().find(function(l){ return l.id === id; });
+      if (!item) return;
+      _editingId = id;
+
+      document.getElementById('modalHeadTitle').textContent = 'Edit Listing #' + id;
+      document.getElementById('saveListingBtn').textContent = 'Update Listing';
+
+      selectType(item.type);
+      selectFulfillChoice(item.fulfillment);
+
+      document.getElementById('itemName').value = item.name;
+      document.getElementById('itemEng').value = item.english || '';
+      document.getElementById('itemCat').value = item.category;
+      document.getElementById('itemUnit').value = item.unit;
+      document.getElementById('itemTotal').value = item.total;
+      document.getElementById('itemPrice').value = item.price;
+      document.getElementById('itemHarvestDate').value = item.harvestDate || '';
+
+      // Populate estimated date picker
+      var estInp = document.getElementById('itemEstDate');
+      if (estInp) {
+        if (item.estimatedDate) {
+          estInp.value = item.estimatedDate;
+        } else if (item.harvestDate) {
+          var m = item.harvestDate.match(/([A-Za-z]+)\s+(\d+)/);
+          if (m) {
+            var year = (item.harvestDate.match(/\d{4}/) || [new Date().getFullYear()])[0];
+            var testDate = new Date(m[1] + ' ' + m[2] + ', ' + year);
+            if (!isNaN(testDate.getTime())) {
+              estInp.value = testDate.toISOString().split('T')[0];
+            } else {
+              estInp.value = '';
+            }
+          } else {
+            estInp.value = '';
+          }
+        }
+      }
+
+      document.getElementById('itemPickup').value = item.pickupAddress || '';
+      document.getElementById('itemDelivNotes').value = item.deliveryNotes || '';
+      document.getElementById('itemPhoto').value = item.photo;
+      document.getElementById('itemDetails').value = item.details || '';
+      updatePhotoPreview(item.photo);
+
+      openModal('listingModal');
+    }
+
+    function saveListingForm(e) {
+      e.preventDefault();
+      var listings = getListings();
+      var name = document.getElementById('itemName').value.trim();
+      var eng = document.getElementById('itemEng').value.trim();
+      var cat = document.getElementById('itemCat').value;
+      var unit = document.getElementById('itemUnit').value;
+      var total = parseInt(document.getElementById('itemTotal').value, 10) || 100;
+      var price = parseFloat(document.getElementById('itemPrice').value) || 50;
+      var estDate = (document.getElementById('itemEstDate') || {}).value || '';
+      var hDate = document.getElementById('itemHarvestDate').value.trim();
+      var pickup = document.getElementById('itemPickup').value.trim();
+      var deliv = document.getElementById('itemDelivNotes').value.trim();
+      var photo = document.getElementById('itemPhoto').value.trim() || PRESETS[_selectedType] || PRESETS.crop;
+      var details = document.getElementById('itemDetails').value.trim();
+
+      if (_editingId) {
+        var existing = listings.find(function(l){ return l.id === _editingId; });
+        if (existing) {
+          existing.name = name;
+          existing.english = eng;
+          existing.type = _selectedType;
+          existing.category = cat;
+          existing.unit = unit;
+          existing.total = total;
+          existing.available = Math.min(existing.available, total);
+          existing.price = price;
+          existing.estimatedDate = estDate;
+          existing.harvestDate = hDate;
+          existing.fulfillment = _selectedFulfill;
+          existing.pickupAddress = pickup;
+          existing.deliveryNotes = deliv;
+          existing.photo = photo;
+          existing.details = details;
+          showToast('Listing updated successfully!');
+        }
+      } else {
+        var newId = listings.length ? Math.max.apply(null, listings.map(function(l){return l.id;})) + 1 : 1;
+        var newObj = {
+          id: newId,
+          name: name,
+          english: eng,
+          type: _selectedType,
+          category: cat,
+          unit: unit,
+          farmerId: _user.id,
+          farmer: _user.name,
+          farmerInitials: _user.initials,
+          farmerPhone: _user.phone || '0917-889-2101',
+          location: _user.location || 'Guimba, Nueva Ecija',
+          price: price,
+          total: total,
+          available: total,
+          estimatedDate: estDate,
+          harvestDate: hDate,
+          photo: photo,
+          fulfillment: _selectedFulfill,
+          deliveryNotes: deliv,
+          pickupAddress: pickup,
+          rating: 4.8,
+          ratingCount: 1,
+          tag: 'Freshly Listed',
+          details: details,
+          status: 'active'
+        };
+        listings.unshift(newObj);
+        showToast('New listing published to marketplace!');
+      }
+
+      saveListings(listings);
+      closeModal('listingModal');
+      renderFarmerListings();
+    }
+
+    function toggleListingStatus(id) {
+      var listings = getListings();
+      var item = listings.find(function(l){ return l.id === id; });
+      if (!item) return;
+      item.status = item.status === 'active' ? 'inactive' : 'active';
+      saveListings(listings);
+      showToast('Listing marked as ' + item.status);
+      renderFarmerListings();
+    }
+
+    function deleteListing(id) {
+      if (!confirm('Are you sure you want to delete this listing?')) return;
+      var listings = getListings().filter(function(l){ return l.id !== id; });
+      saveListings(listings);
+      showToast('Listing removed.');
+      renderFarmerListings();
+    }
+  </script>
+</body>
+</html>

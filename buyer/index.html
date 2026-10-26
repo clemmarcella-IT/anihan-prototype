@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Buyer Dashboard — A.N.I.H.A.N.</title>
+  <link rel="stylesheet" href="../styles.css">
+  <script src="../app.js" defer></script>
+  <style>
+    .dash-hero{border-radius:16px;padding:32px;color:#fff;background:linear-gradient(135deg,#163352,#20548a,#2d73bc);margin-bottom:24px;position:relative;overflow:hidden}
+    .dash-hero::after{content:'';position:absolute;right:-40px;top:-40px;width:240px;height:240px;background:rgba(255,255,255,.07);border-radius:50%}
+    .dash-hero h1{font-size:28px;font-weight:800;margin-bottom:6px}
+    .dash-hero p{font-size:14px;opacity:.9;max-width:560px}
+    .hero-badge{display:inline-flex;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.3);border-radius:20px;padding:4px 14px;font-size:11px;font-weight:700;letter-spacing:.08em;margin-bottom:14px}
+    .quick-actions{display:flex;gap:12px;margin-top:22px;flex-wrap:wrap}
+    .quick-actions .btn{font-size:13px;padding:9px 18px;background:rgba(255,255,255,.18);color:#fff;border:1px solid rgba(255,255,255,.35)}
+    .quick-actions .btn:hover{background:rgba(255,255,255,.28)}
+    .two-col{display:grid;grid-template-columns:1.8fr 1.2fr;gap:22px}
+    @media(max-width:960px){.two-col{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a href="index.html" class="brand">
+        <div class="brand-mark"><svg viewBox="0 0 48 48" fill="none"><path d="M24 40V18" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><path d="M24 27c-9 0-14-4-14-11 8 0 13 3 14 11Z" fill="#EAA023"/><path d="M24 20c1-8 6-12 14-12 0 7-5 12-14 12Z" fill="currentColor"/></svg></div>
+        <div class="brand-text"><strong>A.N.I.H.A.N.</strong><small>Buyer Portal</small></div>
+      </a>
+      <nav id="mainNav"></nav>
+      <div class="topbar-right">
+        <div id="userChip"></div>
+        <button id="logoutBtn">Log out</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="page-wrap">
+    <div class="dash-hero">
+      <div class="hero-badge">Buyer &amp; Merchant Account</div>
+      <h1 id="welcomeGreeting">Good day, Maria!</h1>
+      <p id="buyerSub">Cabanatuan City, Nueva Ecija &bull; Fresh harvest pre-orders, direct farmgate pricing, and transparent order tracking.</p>
+      <div class="quick-actions">
+        <button class="btn" onclick="window.location.href='shop.html'" style="background:#f0c060;color:#332200;font-weight:700">Browse Fresh Harvests &amp; Animals</button>
+        <button class="btn" onclick="window.location.href='orders.html'">Track Active Orders</button>
+        <button class="btn" onclick="window.location.href='account.html'">View Account &amp; Weather</button>
+      </div>
+    </div>
+
+    <!-- STATS -->
+    <div class="stat-grid" id="statsGrid">
+      <div class="stat-card">
+        <div class="stat-label">Active Orders</div>
+        <div class="stat-value" id="statActive">0</div>
+        <div class="stat-sub">in preparation or transit</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Completed Orders</div>
+        <div class="stat-value" id="statCompleted">0</div>
+        <div class="stat-sub">delivered or picked up</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Total Purchased</div>
+        <div class="stat-value" id="statTotalSpent" style="font-size:22px">P0</div>
+        <div class="stat-sub">from local Central Luzon farmers</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Market Listings</div>
+        <div class="stat-value" id="statAvailable">0</div>
+        <div class="stat-sub">crops, livestock &amp; eggs available</div>
+      </div>
+    </div>
+
+    <!-- REAL-TIME LIVE WEATHER WIDGET -->
+    <div id="liveWeatherContainer"></div>
+
+    <!-- TWO COLUMN LAYOUT -->
+    <div class="two-col">
+      <!-- LEFT: ACTIVE ORDERS TRACKER -->
+      <div>
+        <div class="panel">
+          <div class="panel-head">
+            <h2>Active Pre-Orders</h2>
+            <a href="orders.html" class="btn btn-sm btn-secondary">View All Orders</a>
+          </div>
+          <div class="panel-body" style="padding:0" id="activeOrdersList">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <h2>Recommended for You</h2>
+            <a href="shop.html" class="btn btn-sm btn-primary">Browse All Market</a>
+          </div>
+          <div class="panel-body">
+            <div class="product-grid" id="recommendedGrid"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: DIRECT FARMER CONNECT & RECENT HIGHLIGHTS -->
+      <div>
+        <div class="panel">
+          <div class="panel-head">
+            <h2>Direct Farm Contacts</h2>
+          </div>
+          <div class="panel-body" style="padding:16px">
+            <p style="font-size:12px;color:var(--muted);margin-bottom:14px">Direct farmgate coordination without intermediaries or price markups.</p>
+            <div style="display:flex;flex-direction:column;gap:12px" id="farmerContacts">
+              <!-- Farmer contacts -->
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <h2>Buyer Direct Guarantee</h2>
+          </div>
+          <div class="panel-body" style="font-size:13px;color:var(--ink2);line-height:1.6">
+            <div style="display:flex;gap:10px;margin-bottom:12px">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20" style="color:var(--green);flex-shrink:0"><circle cx="12" cy="12" r="10"/><path d="M9 12l2 2 4-4"/></svg>
+              <div><strong>Direct Pre-Ordering</strong><p style="font-size:12px;color:var(--muted)">Lock in fresh harvests before harvest day at agreed farmgate prices.</p></div>
+            </div>
+            <div style="display:flex;gap:10px;margin-bottom:12px">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20" style="color:var(--green);flex-shrink:0"><circle cx="12" cy="12" r="10"/><path d="M9 12l2 2 4-4"/></svg>
+              <div><strong>Pick-up or Direct Delivery</strong><p style="font-size:12px;color:var(--muted)">Know beforehand whether pick-up at farm gate or doorstep delivery applies.</p></div>
+            </div>
+            <div style="display:flex;gap:10px">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20" style="color:var(--green);flex-shrink:0"><circle cx="12" cy="12" r="10"/><path d="M9 12l2 2 4-4"/></svg>
+              <div><strong>Shopee-Style Order Tracking</strong><p style="font-size:12px;color:var(--muted)">Monitor prep, harvest, and transport with real-time status updates.</p></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function(){
+      var user = requireAuth(['Buyer']);
+      if (!user) return;
+
+      document.getElementById('welcomeGreeting').textContent = 'Good day, ' + user.name.split(' ')[0] + '!';
+      document.getElementById('buyerSub').textContent = (user.businessName || user.name) + ' &bull; ' + user.location;
+
+      // Initialize real-time live weather
+      renderLiveWeatherWidget('liveWeatherContainer', user.location, 'Buyer');
+
+      var orders = getOrders().filter(function(o){ return o.buyerId === user.id; });
+      var activeOrders = orders.filter(function(o){ return o.status === 'active'; });
+      var totalSpent = completedOrders.reduce(function(s,o){
+        var n = Number(o.total);
+        return s + (!isNaN(n) && n >= 0 ? n : 0);
+      }, 0);
+      var listings = getListings();
+
+      document.getElementById('statActive').textContent = activeOrders.length;
+      document.getElementById('statCompleted').textContent = completedOrders.length;
+      document.getElementById('statTotalSpent').textContent = 'P' + totalSpent.toLocaleString('en-PH');
+      document.getElementById('statAvailable').textContent = listings.length;
+
+      // Active orders list
+      var aList = document.getElementById('activeOrdersList');
+      if (activeOrders.length === 0) {
+        aList.innerHTML = '<div style="padding:28px;text-align:center;color:var(--muted)"><p>No active orders right now.</p><a href="shop.html" class="btn btn-sm btn-primary" style="margin-top:10px">Start Browsing Harvests</a></div>';
+      } else {
+        aList.innerHTML = activeOrders.map(function(o){
+          var labels = getStepLabels(o.fulfillment);
+          var currentLabel = labels[o.currentStep - 1] || 'In Progress';
+          return '<div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:14px;flex-wrap:wrap">' +
+            '<img src="' + o.itemPhoto + '" style="width:60px;height:60px;border-radius:8px;object-fit:cover;background:#eee" alt="' + o.itemName + '">' +
+            '<div style="flex:1;min-width:180px">' +
+              '<div style="display:flex;align-items:center;gap:8px"><strong style="font-size:14px">' + o.itemName + '</strong>' + getFulfillmentBadge(o.fulfillment) + '</div>' +
+              '<div style="font-size:12px;color:var(--muted);margin-top:2px">Farmer: ' + o.farmer + ' &bull; ' + o.qty + ' &bull; ' + o.date + '</div>' +
+              '<div style="margin-top:6px"><span class="status-pill status-active">' + currentLabel + '</span></div>' +
+            '</div>' +
+            '<div style="text-align:right">' +
+              '<strong style="font-size:16px;color:var(--green);display:block">P' + o.total.toLocaleString('en-PH') + '</strong>' +
+              '<a href="orders.html" class="btn btn-sm btn-secondary" style="margin-top:6px">Track &amp; Chat</a>' +
+            '</div>' +
+          '</div>';
+        }).join('');
+      }
+
+      // Recommended items (mix of crops, livestock, eggs)
+      var recList = listings.slice(0, 4);
+      document.getElementById('recommendedGrid').innerHTML = recList.map(function(item){
+        return '<div class="product-card" onclick="window.location.href=\'shop.html\'">' +
+          '<img class="card-img" src="' + item.photo + '" alt="' + item.name + '" loading="lazy">' +
+          '<div class="card-body">' +
+            '<div class="card-top"><div class="item-name">' + item.name + '</div>' + getCategoryTag(item.type) + '</div>' +
+            '<div class="item-english">' + item.english + '</div>' +
+            '<div class="card-price">P' + item.price.toLocaleString('en-PH') + '<span> / ' + item.unit + '</span></div>' +
+            '<div class="card-meta" style="margin-top:8px">' + getFulfillmentBadge(item.fulfillment) + renderStars(item.rating) + '</div>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+
+      // Farmer contacts
+      var farmers = [
+        { name: 'Juan Dela Cruz', farm: 'Rancho Dela Cruz', loc: 'Guimba, NE', specialty: 'Kamatis & Cattle' },
+        { name: 'Pedro Manalo', farm: 'Manalo Native Eggs', loc: 'Munoz, NE', specialty: 'Free-range Eggs' },
+        { name: 'Rosa Santos', farm: 'Santos Veggie Fields', loc: 'San Fernando, PAM', specialty: 'Talong & Crops' }
+      ];
+      document.getElementById('farmerContacts').innerHTML = farmers.map(function(f){
+        return '<div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--cream);border-radius:8px">' +
+          '<div class="chip-av">' + f.name.slice(0,2).toUpperCase() + '</div>' +
+          '<div style="flex:1"><strong style="font-size:12px;display:block">' + f.name + '</strong><small style="color:var(--muted)">' + f.farm + ' &bull; ' + f.loc + '</small></div>' +
+          '<a href="shop.html" class="btn btn-sm btn-secondary" style="font-size:11px;padding:4px 8px">Browse</a>' +
+        '</div>';
+      }).join('');
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,359 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Buyer Account &amp; Weather — A.N.I.H.A.N.</title>
+  <link rel="stylesheet" href="../styles.css">
+  <script src="../app.js" defer></script>
+  <style>
+    .acc-hero{background:linear-gradient(120deg,#163352,#20548a,#2d73bc);padding:32px 28px;color:#fff}
+    .acc-hero h1{font-size:26px;font-weight:800;margin-bottom:6px}
+    .acc-hero p{font-size:14px;opacity:.9}
+    .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+    @media(max-width:850px){.grid-2{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a href="index.html" class="brand">
+        <div class="brand-mark"><svg viewBox="0 0 48 48" fill="none"><path d="M24 40V18" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><path d="M24 27c-9 0-14-4-14-11 8 0 13 3 14 11Z" fill="#EAA023"/><path d="M24 20c1-8 6-12 14-12 0 7-5 12-14 12Z" fill="currentColor"/></svg></div>
+        <div class="brand-text"><strong>A.N.I.H.A.N.</strong><small>Buyer Portal</small></div>
+      </a>
+      <nav id="mainNav"></nav>
+      <div class="topbar-right">
+        <div id="userChip"></div>
+        <button id="logoutBtn">Log out</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="acc-hero">
+    <div style="max-width:1280px;margin:0 auto;padding:0 28px">
+      <div class="eyebrow" style="color:rgba(255,255,255,.8);margin-bottom:8px">Account Profile &amp; Location Forecast</div>
+      <h1 id="accTitle">Buyer Profile &amp; Location</h1>
+      <p id="accDesc">Manage receiving address, contact number, and monitor local weather conditions for produce shipments.</p>
+    </div>
+  </div>
+
+  <div class="page-wrap">
+    <!-- WEATHER WIDGET -->
+    <div class="weather-bar">
+      <div class="wx-card wx-card-blue">
+        <div class="wx-anim-container">
+          <div class="wx-cloud wx-front"><span class="wx-left-front"></span><span class="wx-right-front"></span></div>
+          <span class="wx-sun wx-sunshine"></span>
+          <span class="wx-sun"></span>
+          <div class="wx-cloud wx-back"><span class="wx-left-back"></span><span class="wx-right-back"></span></div>
+        </div>
+        <div class="wx-card-header">
+          <span id="wLocation">Cabanatuan City, Nueva Ecija</span>
+          <span id="wDate"></span>
+        </div>
+        <span class="wx-temp" id="wTemp">30&deg;</span>
+        <div class="wx-temp-scale"><span>Celcius</span></div>
+      </div>
+      <div class="wx-info-panel wx-info-panel-blue">
+        <div class="wx-live-badge">&#9899; LIVE AGROMET</div>
+        <div class="wx-clock" id="wClock"></div>
+        <div class="wx-advisory" id="wTip">Favorable morning delivery window. Expect clear roads with no storm signal warnings.</div>
+        <div class="wx-stats">
+          <div class="wx-stat"><span>Humidity</span><strong id="wHum">68%</strong></div>
+          <div class="wx-stat"><span>Rain Risk</span><strong id="wRain">10%</strong></div>
+          <div class="wx-stat"><span>Wind</span><strong>14 km/h</strong></div>
+          <div class="wx-stat"><span>Heat Index</span><strong>34&deg;C</strong></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <!-- BUYER DETAILS & ADDRESS -->
+      <div class="panel">
+        <div class="panel-head">
+          <h2>Buyer Profile &amp; Receiving Details</h2>
+        </div>
+        <div class="panel-body">
+          <!-- AVATAR EDITOR -->
+          <div class="avatar-section">
+            <div class="avatar-current-wrap" onclick="document.getElementById('avatarFileInput').click()" title="Click to upload profile photo">
+              <img id="avatarCurrentPreview" src="" alt="Profile Picture">
+              <div class="avatar-overlay">CHANGE</div>
+            </div>
+            <div style="flex:1">
+              <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+                <strong style="font-size:14px;color:var(--ink);display:block">Profile Picture</strong>
+                <!-- Upload button -->
+                <input type="file" id="avatarFileInput" accept="image/*" style="display:none" onchange="handleFileUpload(event)">
+                <button type="button" class="btn btn-primary btn-sm" onclick="document.getElementById('avatarFileInput').click()">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                  Upload Photo
+                </button>
+              </div>
+              <small style="color:var(--muted);font-size:12px;display:block;margin-top:4px">Upload any image file from your device, or choose a preset portrait below:</small>
+              <div class="avatar-presets" id="avatarPresetsContainer"></div>
+              <div style="display:flex;gap:8px;margin-top:10px">
+                <input type="url" id="avatarCustomUrl" placeholder="Or paste image URL (https://...)" style="flex:1;padding:6px 10px;font-size:12px;border:1px solid var(--border);border-radius:6px">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="applyCustomAvatar()">Apply URL</button>
+              </div>
+            </div>
+          </div>
+
+          <form id="profileForm" onsubmit="saveProfile(event)">
+            <div class="form-group">
+              <label>Full Name</label>
+              <input type="text" id="profName" required>
+            </div>
+            <div class="form-group">
+              <label>Business / Stall Name</label>
+              <input type="text" id="profBusiness" placeholder="e.g. Reyes Fresh Produce & Meats">
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Email Address</label>
+                <input type="email" id="profEmail" required>
+              </div>
+              <div class="form-group">
+                <label>Mobile Number (For Delivery SMS &amp; Farmer Contact)</label>
+                <input type="text" id="profPhone" placeholder="0918-554-3209" required>
+              </div>
+            </div>
+            <!-- STRUCTURED DELIVERY & DROP-OFF ADDRESS -->
+            <div style="background:#fdfbf7;border:1.5px solid var(--border);border-radius:10px;padding:16px;margin-bottom:18px">
+              <div style="font-size:13px;font-weight:700;color:var(--ink);margin-bottom:4px;display:flex;align-items:center;gap:6px">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" style="color:var(--green)"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                Receiving Location &amp; Drop-Off Address
+              </div>
+              <small style="color:var(--muted);font-size:12px;display:block;margin-bottom:12px">Fill in each address component for delivery calculation and driver transit:</small>
+
+              <div class="form-row">
+                <div class="form-group" style="margin-bottom:12px">
+                  <label>Purok / Zone</label>
+                  <input type="text" id="profPurok" placeholder="e.g. Purok 2" oninput="updateBuyerAddressPreview()" required>
+                </div>
+                <div class="form-group" style="margin-bottom:12px">
+                  <label>Street / Barangay / Market Stall</label>
+                  <input type="text" id="profStreet" placeholder="e.g. Stall #14, Public Market, Brgy. Dimasalang" oninput="updateBuyerAddressPreview()" required>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group" style="margin-bottom:12px">
+                  <label>Municipality / City</label>
+                  <input type="text" id="profMunicipality" placeholder="e.g. Cabanatuan City" oninput="updateBuyerAddressPreview()" required>
+                </div>
+                <div class="form-group" style="margin-bottom:12px">
+                  <label>Province</label>
+                  <input type="text" id="profProvince" placeholder="e.g. Nueva Ecija" oninput="updateBuyerAddressPreview()" required>
+                </div>
+              </div>
+
+              <!-- COMPILED PREVIEW -->
+              <div style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:12px;color:var(--ink2);margin-top:6px">
+                <div style="display:flex;justify-content:space-between;margin-bottom:4px;flex-wrap:wrap;gap:4px">
+                  <strong style="color:var(--muted);font-size:11px;text-transform:uppercase">Municipality &amp; Province:</strong>
+                  <span id="previewBuyerLoc" style="font-weight:700;color:var(--green)">Cabanatuan City, Nueva Ecija</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px">
+                  <strong style="color:var(--muted);font-size:11px;text-transform:uppercase">Full Delivery Drop-off Address:</strong>
+                  <span id="previewBuyerAddr" style="font-weight:700;color:var(--ink)">Purok 2, Public Market, Cabanatuan City, Nueva Ecija</span>
+                </div>
+              </div>
+            </div>
+
+            <button class="btn btn-primary" type="submit">Save Account Changes</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- LOCATION WEATHER 3-DAY OUTLOOK -->
+      <div>
+        <div class="panel">
+          <div class="panel-head">
+            <h2>3-Day Produce Shipping Weather Forecast</h2>
+          </div>
+          <div class="panel-body">
+            <p style="font-size:13px;color:var(--muted);margin-bottom:16px">Track weather conditions across regional supply routes (Nueva Ecija, Bulacan, Pampanga) to coordinate receiving.</p>
+            <div style="display:flex;flex-direction:column;gap:12px">
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:var(--cream);border-radius:8px">
+                <div>
+                  <strong>Today &bull; Wednesday</strong>
+                  <small style="display:block;color:var(--muted);font-size:11px">Sunny intervals, gentle breeze</small>
+                </div>
+                <div style="text-align:right">
+                  <strong style="color:var(--green)">31&deg;C / 24&deg;C</strong>
+                  <span class="status-pill status-active" style="display:block;margin-top:2px">Optimal Transit</span>
+                </div>
+              </div>
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:var(--cream);border-radius:8px">
+                <div>
+                  <strong>Tomorrow &bull; Thursday</strong>
+                  <small style="display:block;color:var(--muted);font-size:11px">Light scattered showers at 3:00 PM</small>
+                </div>
+                <div style="text-align:right">
+                  <strong>29&deg;C / 23&deg;C</strong>
+                  <span class="status-pill status-pending" style="display:block;margin-top:2px">Covered Hauler Rec.</span>
+                </div>
+              </div>
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:var(--cream);border-radius:8px">
+                <div>
+                  <strong>Friday &bull; Harvest Arrival Day</strong>
+                  <small style="display:block;color:var(--muted);font-size:11px">Clear skies across Guimba to Cabanatuan arterial</small>
+                </div>
+                <div style="text-align:right">
+                  <strong style="color:var(--green)">32&deg;C / 24&deg;C</strong>
+                  <span class="status-pill status-active" style="display:block;margin-top:2px">Optimal Transit</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <h2>Role Information</h2>
+          </div>
+          <div class="panel-body" style="font-size:13px;color:var(--ink2);line-height:1.6">
+            <p><strong>Role:</strong> Verified Buyer / Merchant</p>
+            <p style="margin-top:4px"><strong>Selling Permissions:</strong> None (Buyer accounts are designated strictly for purchasing, pre-ordering, and receipt of farmgate harvests and livestock).</p>
+            <p style="margin-top:4px"><strong>Municipal Office:</strong> Nueva Ecija Provincial Agriculture Office</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toastEl" class="toast-notif"></div>
+
+  <script>
+    var _user;
+    var _selectedAvatar = '';
+
+    document.addEventListener('DOMContentLoaded', function(){
+      _user = requireAuth(['Buyer']);
+      if (!_user) return;
+
+      document.getElementById('accTitle').textContent = _user.name;
+      document.getElementById('profName').value = _user.name || '';
+      document.getElementById('profBusiness').value = _user.businessName || '';
+      document.getElementById('profEmail').value = _user.email || '';
+      document.getElementById('profPhone').value = _user.phone || '';
+
+      // Initialize structured buyer address components
+      document.getElementById('profPurok').value = _user.purok || 'Purok 2';
+      document.getElementById('profStreet').value = _user.street || 'Stall #14, Public Market, Brgy. Dimasalang';
+      document.getElementById('profMunicipality').value = _user.municipality || 'Cabanatuan City';
+      document.getElementById('profProvince').value = _user.province || 'Nueva Ecija';
+      updateBuyerAddressPreview();
+
+      document.getElementById('wLocation').textContent = (_user.location || 'Cabanatuan City, Nueva Ecija') + ' \u2014 Partly Cloudy';
+
+      _selectedAvatar = _user.avatar || 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=160&q=80';
+      updateAvatarPreview(_selectedAvatar);
+      renderAvatarPresets();
+    });
+
+    function updateBuyerAddressPreview() {
+      var purok = (document.getElementById('profPurok').value || '').trim();
+      var street = (document.getElementById('profStreet').value || '').trim();
+      var muni = (document.getElementById('profMunicipality').value || '').trim();
+      var prov = (document.getElementById('profProvince').value || '').trim();
+
+      var buyerLoc = (muni && prov) ? (muni + ', ' + prov) : (muni || prov || 'Cabanatuan City, Nueva Ecija');
+      var fullAddr = [purok, street, muni, prov].filter(Boolean).join(', ') || 'Purok 2, Public Market, Cabanatuan City, Nueva Ecija';
+
+      var el1 = document.getElementById('previewBuyerLoc');
+      var el2 = document.getElementById('previewBuyerAddr');
+      if (el1) el1.textContent = buyerLoc;
+      if (el2) el2.textContent = fullAddr;
+
+      return { buyerLoc: buyerLoc, fullAddr: fullAddr, purok: purok, street: street, municipality: muni, province: prov };
+    }
+
+    function renderAvatarPresets() {
+      var presets = window.AVATAR_PRESETS || [
+        'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=160&q=80',
+        'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=160&q=80',
+        'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=160&q=80',
+        'https://images.unsplash.com/photo-1595273670150-bd0c3c392e46?auto=format&fit=crop&w=160&q=80',
+        'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=160&q=80',
+        'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=160&q=80'
+      ];
+
+      var c = document.getElementById('avatarPresetsContainer');
+      c.innerHTML = presets.map(function(url){
+        var isSel = (url === _selectedAvatar);
+        return '<button type="button" class="avatar-preset-btn ' + (isSel ? 'selected' : '') + '" onclick="selectPresetAvatar(\'' + url + '\')">' +
+          '<img src="' + url + '" alt="Avatar option">' +
+        '</button>';
+      }).join('');
+    }
+
+    function selectPresetAvatar(url) {
+      _selectedAvatar = url;
+      updateAvatarPreview(url);
+      renderAvatarPresets();
+      _user.avatar = url;
+      setAuthUser(_user);
+      initSharedNav();
+      showToast('Profile picture updated!');
+    }
+
+    function applyCustomAvatar() {
+      var val = document.getElementById('avatarCustomUrl').value.trim();
+      if (!val) return;
+      _selectedAvatar = val;
+      updateAvatarPreview(val);
+      _user.avatar = val;
+      setAuthUser(_user);
+      initSharedNav();
+      showToast('Custom profile picture applied!');
+    }
+
+    function handleFileUpload(e) {
+      var file = e.target.files && e.target.files[0];
+      if (!file) return;
+      if (!file.type.startsWith('image/')) {
+        alert('Please select an image file (PNG, JPG, WEBP).');
+        return;
+      }
+      var reader = new FileReader();
+      reader.onload = function(evt) {
+        var base64 = evt.target.result;
+        _selectedAvatar = base64;
+        updateAvatarPreview(base64);
+        _user.avatar = base64;
+        setAuthUser(_user);
+        initSharedNav();
+        showToast('Profile photo uploaded and saved successfully!');
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function updateAvatarPreview(url) {
+      var img = document.getElementById('avatarCurrentPreview');
+      if (img) img.src = url;
+    }
+
+    function saveProfile(e) {
+      e.preventDefault();
+      var addr = updateBuyerAddressPreview();
+
+      _user.name = document.getElementById('profName').value.trim();
+      _user.businessName = document.getElementById('profBusiness').value.trim();
+      _user.email = document.getElementById('profEmail').value.trim();
+      _user.phone = document.getElementById('profPhone').value.trim();
+      _user.purok = addr.purok;
+      _user.street = addr.street;
+      _user.municipality = addr.municipality;
+      _user.province = addr.province;
+      _user.location = addr.buyerLoc;
+      _user.address = addr.fullAddr;
+      _user.avatar = _selectedAvatar;
+
+      setAuthUser(_user);
+      showToast('Profile and receiving address updated successfully!');
+      initSharedNav();
+    }
+  </script>
+</body>
+</html>

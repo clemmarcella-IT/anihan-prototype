@@ -1,0 +1,488 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Assisted Farmer Portal — Barangay Ag Worker — A.N.I.H.A.N.</title>
+  <link rel="stylesheet" href="../styles.css">
+  <script src="../app.js" defer></script>
+  <style>
+    .agw-hero{border-radius:16px;padding:32px;color:#fff;background:linear-gradient(135deg,#3d2402,#734606,#9e640d);margin-bottom:24px;position:relative;overflow:hidden;box-shadow:0 8px 24px rgba(61,36,2,.18)}
+    .agw-hero::after{content:'';position:absolute;right:-40px;top:-40px;width:240px;height:240px;background:rgba(255,255,255,.07);border-radius:50%}
+    .agw-hero h1{font-size:28px;font-weight:800;margin-bottom:6px;color:#fff}
+    .agw-hero p{font-size:14px;opacity:.92;max-width:660px;line-height:1.6}
+    .hero-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.3);border-radius:20px;padding:4px 14px;font-size:11px;font-weight:700;letter-spacing:.08em;margin-bottom:14px}
+    .quick-actions{display:flex;gap:12px;margin-top:22px;flex-wrap:wrap}
+    .quick-actions .btn{font-size:13px;padding:10px 20px;background:rgba(255,255,255,.18);color:#fff;border:1px solid rgba(255,255,255,.35);font-weight:600}
+    .quick-actions .btn:hover{background:rgba(255,255,255,.28)}
+
+    /* PASSCODE COLUMN EMPHASIS */
+    .passcode-badge{font-family:monospace;font-size:13px;font-weight:800;background:#fef3dc;color:#8a4d00;border:1.5px solid #f6c86a;border-radius:6px;padding:3px 8px;letter-spacing:1.5px;display:inline-flex;align-items:center;gap:5px}
+    .passcode-copy-btn{background:transparent;border:0;cursor:pointer;color:#8a4d00;font-size:11px;padding:2px}
+
+    /* PAGINATION STYLES */
+    .table-footer{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-top:1px solid var(--border);background:#fafaf8;flex-wrap:wrap;gap:12px}
+    .pagination-controls{display:flex;align-items:center;gap:6px}
+    .page-btn{border:1px solid var(--border);background:#fff;border-radius:6px;padding:6px 12px;font-size:12px;font-weight:600;color:var(--ink2);cursor:pointer;transition:all .15s}
+    .page-btn:hover:not(:disabled){background:var(--cream);border-color:var(--green);color:var(--green)}
+    .page-btn.active{background:var(--green);color:#fff;border-color:var(--green);font-weight:700}
+    .page-btn:disabled{opacity:.4;cursor:not-allowed}
+    .page-size-select{padding:5px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-weight:600;background:#fff;color:var(--ink)}
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a href="index.html" class="brand">
+        <div class="brand-mark" style="background:#734606">
+          <svg viewBox="0 0 48 48" fill="none"><path d="M24 40V18" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><path d="M24 27c-9 0-14-4-14-11 8 0 13 3 14 11Z" fill="#EAA023"/><path d="M24 20c1-8 6-12 14-12 0 7-5 12-14 12Z" fill="currentColor"/></svg>
+        </div>
+        <div class="brand-text"><strong>A.N.I.H.A.N.</strong><small>Barangay Ag Extension Worker</small></div>
+      </a>
+      <nav id="mainNav"></nav>
+      <div class="topbar-right">
+        <div id="userChip"></div>
+        <button id="logoutBtn">Log out</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="page-wrap">
+    <!-- HERO -->
+    <div class="agw-hero">
+      <div class="hero-badge">Barangay Agricultural Extension Worker &bull; Guimba, Nueva Ecija</div>
+      <h1 id="welcomeGreeting">Mabuhay, Enrique! (Barangay Extension Portal)</h1>
+      <p id="agwSub">Dedicated to assisting farmers with low technology literacy. Register their farms, manage assigned Pass Codes to securely log into their accounts, list their crops &amp; livestock for sale, and track fulfillment.</p>
+      <div class="quick-actions">
+        <button class="btn" onclick="openAssistedRegisterModal()" style="background:#f0c060;color:#222;font-weight:700">+ Register Low-Tech Farmer</button>
+        <button class="btn" onclick="window.location.href='orders.html'">Distribution Monitor (My Farmers) &rarr;</button>
+        <button class="btn" onclick="openContactInfoModal()">My Extension Contact Info</button>
+      </div>
+    </div>
+
+    <!-- STATS -->
+    <div class="stat-grid" style="margin-bottom:24px">
+      <div class="stat-card">
+        <div class="stat-label">My Registered Farmers</div>
+        <div class="stat-value" id="stMyFarmers">0</div>
+        <div class="stat-sub">low-tech assisted growers</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Approved &amp; Active</div>
+        <div class="stat-value" id="stActiveFarmers" style="color:var(--green)">0</div>
+        <div class="stat-sub">ready to sell crops/animals</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Pending LGU Approval</div>
+        <div class="stat-value" id="stPendingFarmers" style="color:var(--gold)">0</div>
+        <div class="stat-sub">submitted to Municipal Admin</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Active Produce &amp; Livestock</div>
+        <div class="stat-value" id="stMyListings">0</div>
+        <div class="stat-sub">marketplace postings</div>
+      </div>
+    </div>
+
+    <!-- WORKFLOW EXPLANATION BANNER -->
+    <div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:16px 20px;margin-bottom:24px;display:flex;align-items:flex-start;gap:14px">
+      <span style="font-size:26px">&#128221;</span>
+      <div>
+        <strong style="color:var(--ink);font-size:14px;display:block">How Barangay Low-Tech Farmer Assistance Works:</strong>
+        <p style="font-size:13px;color:var(--muted);line-height:1.6;margin-top:2px">
+          1. <strong>Register Farmer:</strong> Encode the profile of a smallholder farmer who has low technology literacy. The system automatically assigns a secure <strong>Pass Code</strong>.<br>
+          2. <strong>LGU Verification:</strong> Newly registered accounts are submitted to the <strong>LGU Municipal Admin</strong> for official review and approval.<br>
+          3. <strong>Sell &amp; Log In:</strong> Once approved, use the farmer's <strong>Pass Code</strong> to one-click log in to their account, post their harvested vegetables or livestock, and monitor incoming buyer pre-orders!
+        </p>
+      </div>
+    </div>
+
+    <!-- SEARCH & FILTER -->
+    <div class="filter-bar" style="margin-bottom:18px">
+      <div class="filter-tabs" id="statusTabs">
+        <button class="filter-tab active" data-st="all">All My Farmers</button>
+        <button class="filter-tab" data-st="Active">Approved &amp; Active</button>
+        <button class="filter-tab" data-st="Pending Approval">Pending LGU Approval</button>
+      </div>
+      <div class="search-box">
+        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        <input type="text" id="searchInput" placeholder="Search my registered farmers by name, phone, passcode...">
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="openAssistedRegisterModal()">+ Register New Farmer</button>
+    </div>
+
+    <!-- ACCOUNT RECORDS TABLE -->
+    <div class="panel">
+      <div class="panel-head" style="justify-content:space-between">
+        <div>
+          <h2>Account Records (Assisted Farmers)</h2>
+          <small id="recordCount" style="color:var(--muted)">Displaying farmers registered by Barangay Extension Worker</small>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <label style="font-size:12px;color:var(--muted)">Show:</label>
+          <select id="pageSizeSelect" class="page-size-select" onchange="changePageSize(this.value)">
+            <option value="5">5 per page</option>
+            <option value="10" selected>10 per page</option>
+            <option value="15">15 per page</option>
+            <option value="20">20 per page</option>
+          </select>
+        </div>
+      </div>
+      <div class="panel-body" style="padding:0;overflow-x:auto">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Farmer Name &amp; ID</th>
+              <th>Barangay / Farmstead Location</th>
+              <th>Contact Phone</th>
+              <th style="background:#fef3dc;color:#8a4d00;border-bottom:2px solid #f6c86a">Pass Code / Access PIN</th>
+              <th>RSBSA / Low-Tech Note</th>
+              <th>LGU Approval Status</th>
+              <th style="text-align:center">Listings</th>
+              <th style="text-align:right">Action / Access Account</th>
+            </tr>
+          </thead>
+          <tbody id="assistedTableBody">
+            <!-- Rendered by JS -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- TABLE FOOTER WITH PAGINATION -->
+      <div class="table-footer">
+        <div id="pageInfoText" style="font-size:12px;color:var(--muted)">
+          Showing 1 to 10 of 10 farmers
+        </div>
+        <div class="pagination-controls" id="paginationControls">
+          <!-- Rendered by JS -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ASSISTED REGISTRATION MODAL -->
+  <div class="modal-backdrop hidden" id="assistedModal">
+    <div class="modal-box" style="max-width:540px">
+      <div class="modal-head">
+        <h2>Register Low-Tech Farmer</h2>
+        <button class="modal-close" data-close-modal>&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:12px;color:var(--muted);margin-bottom:16px">
+          The Barangay Extension Worker encodes the farmer's details. Once submitted, the registration will be queued for <strong>LGU Municipal Admin approval</strong>.
+        </p>
+        <form id="assistedForm" onsubmit="saveAssistedAccount(event)">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Farmer Full Name</label>
+              <input type="text" id="asstName" placeholder="e.g. Mang Danilo Ramos" required>
+            </div>
+            <div class="form-group">
+              <label>Mobile / Contact Phone</label>
+              <input type="text" id="asstPhone" placeholder="0918-771-3344" required>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Assigned Pass Code (6-Digit PIN)</label>
+              <div style="display:flex;gap:6px">
+                <input type="text" id="asstPassCode" style="font-family:monospace;font-weight:800;letter-spacing:1px" required>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="generateNewAsstPassCode()">New PIN</button>
+              </div>
+              <small class="form-hint">Used by you to access and sell crops/animals on the farmer's behalf.</small>
+            </div>
+            <div class="form-group">
+              <label>Initial Approval Status</label>
+              <input type="text" value="Pending Approval (Sent to LGU Admin)" disabled style="background:#f9f8f6;color:var(--muted)">
+            </div>
+          </div>
+
+          <div style="background:#fdfbf7;border:1.5px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px">
+            <div style="font-size:12px;font-weight:700;color:var(--ink);margin-bottom:8px">Farmstead Location (Guimba, Nueva Ecija)</div>
+            <div class="form-row">
+              <div class="form-group" style="margin-bottom:8px">
+                <label style="font-size:11px">Purok / Zone</label>
+                <input type="text" id="asstPurok" placeholder="e.g. Purok 4" oninput="updateAsstLocPreview()">
+              </div>
+              <div class="form-group" style="margin-bottom:8px">
+                <label style="font-size:11px">Barangay</label>
+                <input type="text" id="asstBarangay" placeholder="e.g. Brgy. San Roque" oninput="updateAsstLocPreview()" required>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group" style="margin-bottom:8px">
+                <label style="font-size:11px">Municipality</label>
+                <input type="text" id="asstMunicipality" value="Guimba" oninput="updateAsstLocPreview()">
+              </div>
+              <div class="form-group" style="margin-bottom:8px">
+                <label style="font-size:11px">Province</label>
+                <input type="text" id="asstProvince" value="Nueva Ecija" oninput="updateAsstLocPreview()">
+              </div>
+            </div>
+            <div style="background:#fff;border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:12px;color:var(--ink2)">
+              <span style="color:var(--muted);font-size:10px;text-transform:uppercase;font-weight:700">Preview: </span>
+              <span id="asstLocPreview" style="font-weight:700;color:var(--green)">—</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Primary Produce / Livestock Handled</label>
+            <input type="text" id="asstCommodities" placeholder="e.g. Kamatis, Native Pig, Free-range Chicken, Kalabasa">
+          </div>
+
+          <div class="form-group">
+            <label>RSBSA # &amp; Low-Tech Literacy Notes</label>
+            <input type="text" id="asstNote" placeholder="e.g. Non-literate grower, RSBSA #03-49-08-089, needs assistance with mobile encoding" value="Low-tech grower, assisted by Ag Worker">
+          </div>
+
+          <div class="modal-foot" style="padding:16px 0 0;justify-content:flex-end">
+            <button class="btn btn-secondary" type="button" data-close-modal>Cancel</button>
+            <button class="btn btn-primary" type="submit">Submit to LGU Admin for Approval</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div id="toastEl" class="toast-notif"></div>
+
+  <script>
+    var _user;
+    var _currStatus = 'all', _searchQ = '';
+    var _currentPage = 1;
+    var _pageSize = 10;
+
+    document.addEventListener('DOMContentLoaded', function(){
+      _user = requireAuth(['Ag Worker']);
+      if (!_user) return;
+
+      renderMyFarmersTable();
+
+      document.querySelectorAll('#statusTabs .filter-tab').forEach(function(b){
+        b.addEventListener('click', function(){
+          document.querySelectorAll('#statusTabs .filter-tab').forEach(function(x){ x.classList.remove('active'); });
+          b.classList.add('active');
+          _currStatus = b.getAttribute('data-st');
+          _currentPage = 1;
+          renderMyFarmersTable();
+        });
+      });
+
+      document.getElementById('searchInput').addEventListener('input', function(e){
+        _searchQ = e.target.value.toLowerCase().trim();
+        _currentPage = 1;
+        renderMyFarmersTable();
+      });
+    });
+
+    // ONLY SHOW FARMERS REGISTERED BY THIS AG WORKER
+    function getMyRegisteredFarmers() {
+      var all = getAccounts();
+      var myId = _user ? _user.id : 'U003';
+      var myName = _user ? _user.name : 'Enrique Dizon';
+
+      return all.filter(function(a){
+        if (a.role !== 'Farmer') return false;
+        // Strictly filter to accounts assisted/registered by this Ag Worker
+        var isRegisteredByMe = (a.registeredBy === myId || a.registeredBy === 'U003' || a.assistedBy === myName || a.assistedBy === 'Enrique Dizon');
+        return isRegisteredByMe;
+      });
+    }
+
+    function getFilteredMyFarmers() {
+      var myFarmers = getMyRegisteredFarmers();
+      return myFarmers.filter(function(a){
+        if (_currStatus === 'Active' && a.status !== 'Active') return false;
+        if (_currStatus === 'Pending Approval' && (a.status !== 'Pending Approval' && a.status !== 'Pending')) return false;
+
+        if (_searchQ) {
+          var str = (a.name + ' ' + a.id + ' ' + (a.phone||'') + ' ' + (a.location||'') + ' ' + (a.passCode||'') + ' ' + (a.note||'')).toLowerCase();
+          if (!str.includes(_searchQ)) return false;
+        }
+        return true;
+      });
+    }
+
+    function renderMyFarmersTable() {
+      var myFarmers = getMyRegisteredFarmers();
+      var filtered = getFilteredMyFarmers();
+      var listings = getListings();
+
+      var activeFarmers = myFarmers.filter(function(a){ return a.status === 'Active'; });
+      var pendingFarmers = myFarmers.filter(function(a){ return a.status === 'Pending' || a.status === 'Pending Approval'; });
+
+      // Count listings belonging to these registered farmers
+      var myFarmerIds = myFarmers.map(function(f){ return f.id; });
+      var myListingsCount = listings.filter(function(l){ return myFarmerIds.includes(l.farmerId); }).length;
+
+      document.getElementById('stMyFarmers').textContent = myFarmers.length;
+      document.getElementById('stActiveFarmers').textContent = activeFarmers.length;
+      document.getElementById('stPendingFarmers').textContent = pendingFarmers.length;
+      document.getElementById('stMyListings').textContent = myListingsCount;
+
+      // PAGINATION
+      var totalItems = filtered.length;
+      var totalPages = Math.ceil(totalItems / _pageSize) || 1;
+      if (_currentPage > totalPages) _currentPage = totalPages;
+      if (_currentPage < 1) _currentPage = 1;
+
+      var startIndex = (_currentPage - 1) * _pageSize;
+      var endIndex = Math.min(startIndex + _pageSize, totalItems);
+      var pageItems = filtered.slice(startIndex, endIndex);
+
+      document.getElementById('recordCount').textContent = 'Showing ' + (totalItems === 0 ? 0 : startIndex + 1) + ' to ' + endIndex + ' of ' + totalItems + ' registered farmers';
+      document.getElementById('pageInfoText').textContent = 'Showing ' + (totalItems === 0 ? 0 : startIndex + 1) + ' to ' + endIndex + ' of ' + totalItems + ' farmers (Page ' + _currentPage + ' of ' + totalPages + ')';
+
+      renderPaginationControls(totalPages);
+
+      var tbody = document.getElementById('assistedTableBody');
+      if (pageItems.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--muted)">No registered farmers found matching filter.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = pageItems.map(function(a){
+        var isActive = a.status === 'Active';
+        var isPending = a.status === 'Pending' || a.status === 'Pending Approval';
+        var farmerListings = listings.filter(function(l){ return l.farmerId === a.id; }).length;
+
+        return '<tr>' +
+          '<td>' +
+            '<strong>' + a.name + '</strong>' +
+            '<small style="display:block;color:var(--muted);font-size:11px">ID: ' + a.id + '</small>' +
+            '<span class="badge badge-both" style="font-size:9px;margin-top:2px">&#128100; Low-Tech Assisted</span>' +
+          '</td>' +
+          '<td style="color:var(--ink2);font-size:12px">' + (a.location || 'Guimba, Nueva Ecija') + '</td>' +
+          '<td style="font-size:13px">' + (a.phone || '0917-889-2101') + '</td>' +
+          '<td style="background:#fefbf4">' +
+            '<span class="passcode-badge">' +
+              '<span>' + (a.passCode || '492011') + '</span>' +
+              '<button type="button" class="passcode-copy-btn" onclick="navigator.clipboard.writeText(\'' + (a.passCode||'') + '\');showToast(\'Pass Code copied!\',\'success\')" title="Copy Passcode">&#128203;</button>' +
+            '</span>' +
+          '</td>' +
+          '<td style="font-size:12px;color:var(--muted);max-width:200px">' + (a.note || 'Assisted grower') + '</td>' +
+          '<td>' +
+            '<span class="status-pill ' + (isActive ? 'status-active' : isPending ? 'status-pending' : 'status-suspended') + '">' +
+              (isPending ? 'Pending LGU Approval' : a.status) +
+            '</span>' +
+          '</td>' +
+          '<td style="text-align:center;font-weight:700">' + farmerListings + '</td>' +
+          '<td style="text-align:right">' +
+            (isActive ?
+              '<button class="btn btn-sm btn-primary" onclick="loginAsFarmerForAgWorker(\'' + a.id + '\',\'' + (a.passCode||'') + '\')" style="background:#2e6f40">' +
+                '&#128273; Log in &amp; Sell Produce &rarr;' +
+              '</button>' :
+              '<span style="font-size:11px;color:var(--gold);font-weight:700">Awaiting LGU Approval</span>') +
+          '</td>' +
+        '</tr>';
+      }).join('');
+    }
+
+    function renderPaginationControls(totalPages) {
+      var c = document.getElementById('paginationControls');
+      if (!c) return;
+
+      var h = '';
+      h += '<button class="page-btn" onclick="goToPage(' + (_currentPage - 1) + ')" ' + (_currentPage === 1 ? 'disabled' : '') + '>&larr; Prev</button>';
+
+      for (var i = 1; i <= totalPages; i++) {
+        if (totalPages <= 7 || i === 1 || i === totalPages || (i >= _currentPage - 1 && i <= _currentPage + 1)) {
+          h += '<button class="page-btn ' + (i === _currentPage ? 'active' : '') + '" onclick="goToPage(' + i + ')">' + i + '</button>';
+        } else if (i === _currentPage - 2 || i === _currentPage + 2) {
+          h += '<span style="padding:0 4px;color:var(--muted)">...</span>';
+        }
+      }
+
+      h += '<button class="page-btn" onclick="goToPage(' + (_currentPage + 1) + ')" ' + (_currentPage === totalPages ? 'disabled' : '') + '>Next &rarr;</button>';
+      c.innerHTML = h;
+    }
+
+    function goToPage(p) {
+      _currentPage = p;
+      renderMyFarmersTable();
+    }
+
+    function changePageSize(size) {
+      _pageSize = parseInt(size, 10) || 10;
+      _currentPage = 1;
+      renderMyFarmersTable();
+    }
+
+    function openAssistedRegisterModal() {
+      document.getElementById('assistedForm').reset();
+      generateNewAsstPassCode();
+      updateAsstLocPreview();
+      openModal('assistedModal');
+    }
+
+    function generateNewAsstPassCode() {
+      var code = String(Math.floor(100000 + Math.random() * 900000));
+      document.getElementById('asstPassCode').value = code;
+    }
+
+    function updateAsstLocPreview() {
+      var parts = [
+        (document.getElementById('asstPurok') || {}).value || '',
+        (document.getElementById('asstBarangay') || {}).value || '',
+        (document.getElementById('asstMunicipality') || {}).value || '',
+        (document.getElementById('asstProvince') || {}).value || ''
+      ].filter(function(s){ return s.trim(); });
+      var prev = document.getElementById('asstLocPreview');
+      if (prev) prev.textContent = parts.length ? parts.join(', ') : '—';
+    }
+
+    function saveAssistedAccount(e) {
+      e.preventDefault();
+      var name = document.getElementById('asstName').value.trim();
+      var phone = document.getElementById('asstPhone').value.trim();
+      var passCode = document.getElementById('asstPassCode').value.trim();
+      var commodities = document.getElementById('asstCommodities').value.trim();
+      var note = document.getElementById('asstNote').value.trim();
+
+      var purok = ((document.getElementById('asstPurok') || {}).value || '').trim();
+      var brgy  = ((document.getElementById('asstBarangay') || {}).value || '').trim();
+      var muni  = ((document.getElementById('asstMunicipality') || {}).value || 'Guimba').trim();
+      var prov  = ((document.getElementById('asstProvince') || {}).value || 'Nueva Ecija').trim();
+      var loc   = [purok, brgy, muni, prov].filter(Boolean).join(', ');
+
+      var accounts = getAccounts();
+      var num = Math.floor(100 + Math.random() * 900);
+      var newId = 'F' + num;
+
+      var fullNote = (commodities ? 'Commodities: ' + commodities + '. ' : '') + note;
+
+      var newFarmer = {
+        id: newId,
+        name: name,
+        role: 'Farmer',
+        phone: phone,
+        email: name.toLowerCase().replace(/[^a-z]/g, '') + '@anihan.ph',
+        passCode: passCode,
+        location: loc,
+        purok: purok,
+        barangay: brgy,
+        municipality: muni,
+        province: prov,
+        status: 'Pending Approval',
+        registeredBy: _user ? _user.id : 'U003',
+        assistedBy: _user ? _user.name : 'Enrique Dizon',
+        lowTech: true,
+        note: fullNote,
+        listings: 0,
+        orders: 0
+      };
+
+      accounts.unshift(newFarmer);
+      saveAccounts(accounts);
+      closeModal('assistedModal');
+      showToast('\u2713 Account for ' + name + ' registered! Submitted to LGU Admin for verification.', 'success');
+      renderMyFarmersTable();
+    }
+
+    function openContactInfoModal() {
+      alert('Extension Worker Contact Card:\nName: Enrique Dizon\nOffice: LGU Municipal Agriculture Office - Guimba\nHotline: 0919-332-8819\nAssistance: On-field registration, Passcode recovery, and harvest cataloging.');
+    }
+  </script>
+</body>
+</html>

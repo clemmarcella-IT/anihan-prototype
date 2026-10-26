@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Farmer Dashboard — A.N.I.H.A.N.</title>
+  <link rel="stylesheet" href="../styles.css">
+  <script src="../app.js" defer></script>
+  <style>
+    .dash-hero{border-radius:16px;padding:32px;color:#fff;background:linear-gradient(135deg,#1a4d2b,#2e6f40,#3d8a50);margin-bottom:24px;position:relative;overflow:hidden}
+    .dash-hero::after{content:'';position:absolute;right:-40px;top:-40px;width:240px;height:240px;background:rgba(255,255,255,.07);border-radius:50%}
+    .dash-hero h1{font-size:28px;font-weight:800;margin-bottom:6px}
+    .dash-hero p{font-size:14px;opacity:.9;max-width:580px}
+    .hero-badge{display:inline-flex;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.3);border-radius:20px;padding:4px 14px;font-size:11px;font-weight:700;letter-spacing:.08em;margin-bottom:14px}
+    .quick-actions{display:flex;gap:12px;margin-top:22px;flex-wrap:wrap}
+    .quick-actions .btn{font-size:13px;padding:9px 18px;background:rgba(255,255,255,.18);color:#fff;border:1px solid rgba(255,255,255,.35)}
+    .quick-actions .btn:hover{background:rgba(255,255,255,.28)}
+    .two-col{display:grid;grid-template-columns:1.8fr 1.2fr;gap:22px}
+    @media(max-width:960px){.two-col{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a href="index.html" class="brand">
+        <div class="brand-mark"><svg viewBox="0 0 48 48" fill="none"><path d="M24 40V18" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><path d="M24 27c-9 0-14-4-14-11 8 0 13 3 14 11Z" fill="#EAA023"/><path d="M24 20c1-8 6-12 14-12 0 7-5 12-14 12Z" fill="currentColor"/></svg></div>
+        <div class="brand-text"><strong>A.N.I.H.A.N.</strong><small>Farmer Portal</small></div>
+      </a>
+      <nav id="mainNav"></nav>
+      <div class="topbar-right">
+        <div id="userChip"></div>
+        <button id="logoutBtn">Log out</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="page-wrap">
+    <div class="dash-hero">
+      <div class="hero-badge">Farmer &amp; Livestock Producer Portal</div>
+      <h1 id="welcomeGreeting">Mabuhay, Juan!</h1>
+      <p id="farmerSub">Rancho Dela Cruz &bull; Guimba, Nueva Ecija &mdash; Sell your crops, cattle, pigs, and fresh eggs directly to verified buyers.</p>
+      <div class="quick-actions">
+        <button class="btn" onclick="window.location.href='sell.html'" style="background:#f0c060;color:#332200;font-weight:700">+ Post Harvest or Livestock</button>
+        <button class="btn" onclick="window.location.href='orders.html'">Manage Incoming Orders</button>
+        <button class="btn" onclick="window.location.href='shop.html'">Check Market Rates</button>
+        <button class="btn" onclick="window.location.href='account.html'">Farm &amp; Weather</button>
+      </div>
+    </div>
+
+    <!-- PROMINENT AG WORKER CONSULTATION & ASSISTANCE BANNER -->
+    <div style="background:linear-gradient(135deg,#fef7e6,#fff5db);border:2px solid #e5a01c;border-radius:14px;padding:20px 24px;margin-bottom:24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:18px;box-shadow:0 4px 16px rgba(201,134,26,.15)">
+      <div style="display:flex;align-items:center;gap:18px">
+        <div style="position:relative">
+          <img src="https://images.unsplash.com/photo-1607748862156-7c548e7e98f4?w=200&q=80" alt="Enrique Dizon" style="width:68px;height:68px;border-radius:50%;object-fit:cover;border:3px solid #c9861a">
+          <span style="position:absolute;bottom:0;right:0;width:18px;height:18px;background:#2e6f40;border:2px solid #fff;border-radius:50%" title="Available On-Duty"></span>
+        </div>
+        <div>
+          <span style="display:inline-flex;align-items:center;gap:5px;background:#c9861a;color:#fff;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;padding:3px 9px;border-radius:12px;margin-bottom:5px">
+            &#9733; Barangay Ag Worker Assistance &bull; Libreng Konsultasyon
+          </span>
+          <h2 style="font-size:18px;font-weight:800;color:#3a2002;margin-bottom:2px">
+            Kailangan ng tulong sa pagbenta? Tawagan si Enrique Dizon (Extension Worker)
+          </h2>
+          <p style="font-size:13px;color:#6b4712;max-width:620px">
+            Nandito ang iyong barangay agricultural worker para tumulong: pag-lista ng ani, pag-update ng presyo, pagtimbang ng baka/baboy, o digital assistance gamit ang iyong <strong>Pass Code</strong>.
+          </p>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <a href="tel:09193328819" style="background:#2e6f40;color:#fff;border-radius:10px;padding:12px 20px;font-size:16px;font-weight:800;text-decoration:none;display:inline-flex;align-items:center;gap:8px;box-shadow:0 3px 12px rgba(46,111,64,.35);transition:transform .18s">
+          <span style="font-size:18px">&#128222;</span> 0919-332-8819
+        </a>
+        <a href="sms:09193328819" class="btn btn-secondary" style="border-color:#c9861a;color:#804c00;font-weight:700">
+          &#128172; Text / SMS
+        </a>
+      </div>
+    </div>
+
+    <!-- STATS -->
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-label">Active Listings</div>
+        <div class="stat-value" id="statListings">0</div>
+        <div class="stat-sub">crops, livestock &amp; eggs posted</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Incoming Orders</div>
+        <div class="stat-value" id="statIncoming" style="color:var(--green)">0</div>
+        <div class="stat-sub">orders needing fulfillment</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Projected Sales</div>
+        <div class="stat-value" id="statSales" style="font-size:22px">P0</div>
+        <div class="stat-sub">committed pre-orders value</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Completed Orders</div>
+        <div class="stat-value" id="statCompleted">0</div>
+        <div class="stat-sub">successfully handed over/delivered</div>
+      </div>
+    </div>
+
+    <!-- REAL-TIME LIVE WEATHER WIDGET -->
+    <div id="liveWeatherContainer"></div>
+
+    <!-- TWO COLUMN LAYOUT -->
+    <div class="two-col">
+      <!-- LEFT: MY ACTIVE PRODUCE & ANIMALS -->
+      <div>
+        <div class="panel">
+          <div class="panel-head">
+            <h2>My Harvest &amp; Livestock Listings</h2>
+            <a href="sell.html" class="btn btn-sm btn-primary">+ Add New</a>
+          </div>
+          <div class="panel-body" style="padding:0" id="farmerListingsContainer">
+            <!-- Listings rows -->
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <h2>Fulfillment Mode Breakdown</h2>
+          </div>
+          <div class="panel-body" style="display:flex;gap:14px;flex-wrap:wrap">
+            <div style="flex:1;min-width:140px;background:var(--cream);border-radius:8px;padding:14px">
+              <span class="badge badge-pickup" style="margin-bottom:6px">Pick-up Only</span>
+              <strong style="display:block;font-size:18px;margin-top:4px" id="cntPickup">0 listings</strong>
+              <small style="color:var(--muted)">Buyers pick up at farm gate</small>
+            </div>
+            <div style="flex:1;min-width:140px;background:var(--cream);border-radius:8px;padding:14px">
+              <span class="badge badge-delivery" style="margin-bottom:6px">Delivery Only</span>
+              <strong style="display:block;font-size:18px;margin-top:4px" id="cntDeliv">0 listings</strong>
+              <small style="color:var(--muted)">Delivered to buyer destination</small>
+            </div>
+            <div style="flex:1;min-width:140px;background:var(--cream);border-radius:8px;padding:14px">
+              <span class="badge badge-both" style="margin-bottom:6px">Both Options</span>
+              <strong style="display:block;font-size:18px;margin-top:4px" id="cntBoth">0 listings</strong>
+              <small style="color:var(--muted)">Buyer can choose preference</small>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: RECENT ORDERS REQUIRING ACTION -->
+      <div>
+        <div class="panel">
+          <div class="panel-head">
+            <h2>Incoming Buyer Orders</h2>
+            <a href="orders.html" class="btn btn-sm btn-secondary">All Orders</a>
+          </div>
+          <div class="panel-body" style="padding:0" id="farmerOrdersContainer">
+            <!-- Orders rows -->
+          </div>
+        </div>
+
+        <!-- AG WORKER SUPPORT WIDGET -->
+        <div class="panel">
+          <div class="panel-head">
+            <h2>Barangay Ag Worker Support</h2>
+          </div>
+          <div class="panel-body" style="font-size:13px;line-height:1.6">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+              <div class="chip-av" style="background:var(--gold)">ED</div>
+              <div>
+                <strong>Enrique Dizon</strong>
+                <small style="display:block;color:var(--muted)">Barangay Agricultural Extension Worker &bull; Guimba</small>
+              </div>
+            </div>
+            <p style="color:var(--ink2);margin-bottom:10px">Need assistance updating your crop listings, weighing livestock, or securing cold storage during surplus harvest?</p>
+            <div style="display:flex;gap:8px">
+              <a href="tel:09193328819" class="btn btn-sm btn-outline-green">Call Ag Worker</a>
+              <a href="account.html" class="btn btn-sm btn-secondary">Assistance Kiosk</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function(){
+      var user = requireAuth(['Farmer']);
+      if (!user) return;
+
+      document.getElementById('welcomeGreeting').textContent = 'Mabuhay, ' + user.name.split(' ')[0] + '!';
+      document.getElementById('farmerSub').textContent = (user.farmName || 'Farmstead') + ' \u2022 ' + user.location + ' \u2014 Sell crops, livestock, and fresh eggs directly.';
+
+      // Initialize real-time live weather
+      renderLiveWeatherWidget('liveWeatherContainer', user.location, 'Farmer');
+
+      var listings = getListings().filter(function(l){ return l.farmerId === user.id; });
+      var orders = getOrders().filter(function(o){ return o.farmerId === user.id; });
+      var incoming = orders.filter(function(o){ return o.status === 'active'; });
+      var completed = orders.filter(function(o){ return o.status === 'completed'; });
+      var totalSales = orders.reduce(function(s,o){
+        var n = Number(o.total);
+        return s + (!isNaN(n) && n >= 0 ? n : 0);
+      }, 0);
+
+      document.getElementById('statListings').textContent = listings.length;
+      document.getElementById('statIncoming').textContent = incoming.length;
+      document.getElementById('statSales').textContent = 'P' + totalSales.toLocaleString('en-PH');
+      document.getElementById('statCompleted').textContent = completed.length;
+
+      // Fulfillment counts
+      document.getElementById('cntPickup').textContent = listings.filter(function(l){ return l.fulfillment==='Pick-up'; }).length + ' listings';
+      document.getElementById('cntDeliv').textContent = listings.filter(function(l){ return l.fulfillment==='Delivery'; }).length + ' listings';
+      document.getElementById('cntBoth').textContent = listings.filter(function(l){ return l.fulfillment==='Both'; }).length + ' listings';
+
+      // Listings rows
+      var lc = document.getElementById('farmerListingsContainer');
+      if (listings.length === 0) {
+        lc.innerHTML = '<div style="padding:30px;text-align:center;color:var(--muted)"><p>No active listings. Start selling your harvest!</p><a href="sell.html" class="btn btn-sm btn-primary" style="margin-top:10px">+ Add First Listing</a></div>';
+      } else {
+        lc.innerHTML = listings.map(function(l){
+          var pct = Math.round((l.available / l.total) * 100);
+          return '<div style="display:flex;align-items:center;gap:14px;padding:16px 20px;border-bottom:1px solid var(--border);flex-wrap:wrap">' +
+            '<img src="' + l.photo + '" style="width:56px;height:56px;border-radius:8px;object-fit:cover;background:#eee" alt="' + l.name + '">' +
+            '<div style="flex:1;min-width:180px">' +
+              '<div style="display:flex;align-items:center;gap:8px"><strong style="font-size:14px">' + l.name + '</strong>' + getCategoryTag(l.type) + '</div>' +
+              '<div style="font-size:12px;color:var(--muted);margin-top:2px">' + getFulfillmentBadge(l.fulfillment) + ' &bull; Ready: ' + l.harvestDate + '</div>' +
+              '<div style="margin-top:6px;height:5px;background:var(--border);border-radius:3px;overflow:hidden;max-width:240px">' +
+                '<div style="width:' + pct + '%;height:100%;background:var(--green)"></div>' +
+              '</div>' +
+              '<small style="font-size:11px;color:var(--muted)">' + l.available + ' ' + l.unit + ' remaining of ' + l.total + '</small>' +
+            '</div>' +
+            '<div style="text-align:right">' +
+              '<strong style="font-size:16px;color:var(--green);display:block">P' + l.price.toLocaleString('en-PH') + '</strong>' +
+              '<small style="font-size:11px;color:var(--muted)">per ' + l.unit + '</small>' +
+              '<a href="sell.html" class="btn btn-sm btn-secondary" style="margin-top:6px;font-size:11px;padding:4px 10px">Manage</a>' +
+            '</div>' +
+          '</div>';
+        }).join('');
+      }
+
+      // Orders rows
+      var oc = document.getElementById('farmerOrdersContainer');
+      if (orders.length === 0) {
+        oc.innerHTML = '<div style="padding:28px;text-align:center;color:var(--muted)">No orders yet from buyers.</div>';
+      } else {
+        oc.innerHTML = orders.map(function(o){
+          var labels = getStepLabels(o.fulfillment);
+          var curr = labels[o.currentStep - 1] || 'Completed';
+          return '<div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;flex-wrap:wrap">' +
+            '<img src="' + o.itemPhoto + '" style="width:48px;height:48px;border-radius:8px;object-fit:cover;background:#eee">' +
+            '<div style="flex:1;min-width:160px">' +
+              '<strong style="font-size:13px;display:block">' + o.itemName + '</strong>' +
+              '<small style="color:var(--muted);font-size:11px">Buyer: ' + o.buyer + ' &bull; ' + o.qty + '</small>' +
+              '<div style="margin-top:4px"><span class="status-pill ' + (o.status==='completed'?'status-completed':'status-active') + '">' + curr + '</span> ' + getFulfillmentBadge(o.fulfillment) + '</div>' +
+            '</div>' +
+            '<div style="text-align:right">' +
+              '<strong style="color:var(--green)">P' + o.total.toLocaleString('en-PH') + '</strong>' +
+              '<a href="orders.html" class="btn btn-sm btn-secondary" style="margin-top:4px;display:block;font-size:11px">Update Step</a>' +
+            '</div>' +
+          '</div>';
+        }).join('');
+      }
+    });
+  </script>
+</body>
+</html>
