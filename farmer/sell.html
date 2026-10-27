@@ -363,7 +363,7 @@
           '<td><strong>' + item.available + ' ' + item.unit + '</strong><small style="display:block;color:var(--muted);font-size:11px">of ' + item.total + ' ' + item.unit + '</small><div style="margin-top:5px;height:4px;background:var(--border);border-radius:3px;overflow:hidden;width:100px"><div style="width:' + pct + '%;height:100%;background:var(--green)"></div></div></td>' +
           '<td><strong style="color:var(--green)">P' + item.price.toLocaleString('en-PH') + '</strong><small style="display:block;color:var(--muted);font-size:11px">per ' + item.unit + '</small></td>' +
           '<td>' + item.harvestDate + '</td>' +
-          '<td>' + getFulfillmentBadge(item.fulfillment) + '<div style="margin-top:4px">' + renderStars(item.rating) + '</div></td>' +
+          '<td>' + getFulfillmentBadge(item.fulfillment) + '<div style="margin-top:4px">' + renderStars(item.rating) + ' (' + (item.ratingCount || 0) + ')</div><div id="listing-reviews-' + item.id + '" style="min-width:170px;margin-top:8px"></div></td>' +
           '<td><span class="status-pill ' + (item.status === 'active' ? 'status-active' : 'status-suspended') + '">' + (item.status === 'active' ? 'Active' : 'Inactive') + '</span></td>' +
           '<td><div style="display:flex;gap:5px;flex-wrap:wrap;min-width:190px">' +
             '<button class="btn btn-sm btn-secondary" onclick="openEditListingModal(' + item.id + ')">Edit</button>' +
@@ -373,6 +373,9 @@
         '</tr>';
       }).join('') + '</tbody></table></div>' +
         '<div class="table-footer"><div id="pageInfoText" style="font-size:12px;color:var(--muted)">Showing ' + (startIndex + 1) + ' to ' + Math.min(startIndex + _pageSize, list.length) + ' of ' + list.length + ' listings (Page ' + _currentPage + ' of ' + totalPages + ')</div><div class="pagination-controls" id="paginationControls"></div></div></div>';
+      pageItems.forEach(function(item){
+        renderRatingComments('listing-reviews-' + item.id, getRatingComments('product', item.id, 2));
+      });
       renderPaginationControls(totalPages);
     }
 

@@ -108,6 +108,15 @@
         </div>
 
         <div style="margin-bottom:14px" id="modalRatingRow"></div>
+        <div style="margin-bottom:14px">
+          <strong style="font-size:12px">Recent product comments</strong>
+          <div id="modalProductReviews"></div>
+          <div style="margin-top:12px">
+            <div style="margin-bottom:8px"><strong style="font-size:12px">Farmer rating:</strong> <span id="modalFarmerRating"></span></div>
+            <strong style="font-size:12px">Recent farmer comments</strong>
+            <div id="modalFarmerReviews"></div>
+          </div>
+        </div>
         <p id="modalDetails" style="font-size:13px;color:var(--ink2);line-height:1.5;margin-bottom:14px;padding:10px;background:var(--cream);border-radius:8px"></p>
 
         <div style="background:#fafaf8;border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin-bottom:16px">
@@ -249,6 +258,7 @@
 
       grid.innerHTML = items.map(function(item){
         var pct = Math.round((item.available / item.total) * 100);
+        var farmerRating = getFarmerRatingSummary(item.farmerId);
         return '<div class="product-card" onclick="openOrderModal(' + item.id + ')">' +
           '<img class="card-img" src="' + item.photo + '" alt="' + item.name + '" loading="lazy">' +
           '<div class="card-body">' +
@@ -260,8 +270,16 @@
             '<div class="card-price">P' + item.price.toLocaleString('en-PH') + '<span> / ' + item.unit + '</span></div>' +
             '<div class="card-meta">' +
               getFulfillmentBadge(item.fulfillment) +
-              renderStars(item.rating) +
+              '<span style="font-size:10px;color:var(--muted)">Product</span> ' + renderStars(item.rating) +
+              ' <small style="color:var(--muted)">(' + (item.ratingCount || 0) + ')</small>' +
             '</div>' +
+            '<div style="font-size:11px;color:var(--muted);margin-top:5px">Product comments</div>' +
+            '<div id="card-product-reviews-' + item.id + '"></div>' +
+            '<div style="font-size:11px;color:var(--muted);margin-top:7px">Farmer rating: ' +
+              (farmerRating.ratingCount ? renderStars(farmerRating.rating) + ' (' + farmerRating.ratingCount + ')' : 'Not yet rated') +
+            '</div>' +
+            '<div style="font-size:11px;color:var(--muted);margin-top:5px">Farmer comments</div>' +
+            '<div id="card-farmer-reviews-' + item.id + '"></div>' +
             '<div style="margin-top:8px">' +
               '<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:4px">' +
                 '<span>Available Stock</span><span>' + item.available + ' ' + item.unit + '</span>' +
@@ -287,6 +305,10 @@
           '</div>' +
         '</div>';
       }).join('');
+      items.forEach(function(item){
+        renderRatingComments('card-product-reviews-' + item.id, getRatingComments('product', item.id, 2));
+        renderRatingComments('card-farmer-reviews-' + item.id, getRatingComments('farmer', item.farmerId, 2));
+      });
     }
 
     function openOrderModal(id) {
@@ -299,11 +321,17 @@
       document.getElementById('modalName').textContent = item.name;
       document.getElementById('modalEng').textContent = item.english || '';
       document.getElementById('modalCatTag').innerHTML = getCategoryTag(item.type);
-      document.getElementById('modalRatingRow').innerHTML = renderStars(item.rating) + ' <span style="font-size:12px;color:var(--muted);margin-left:6px">(' + item.ratingCount + ' verified reviews)</span>';
+      document.getElementById('modalRatingRow').innerHTML = '<strong style="font-size:12px">Product rating:</strong> ' + renderStars(item.rating) + ' <span style="font-size:12px;color:var(--muted);margin-left:6px">(' + (item.ratingCount || 0) + ' verified reviews)</span>';
+      renderRatingComments('modalProductReviews', getRatingComments('product', item.id));
       document.getElementById('modalDetails').textContent = item.details || 'Fresh local produce direct from farmer.';
 
       var fPhone = item.farmerPhone || '0917-889-2101';
       document.getElementById('modalFarmer').textContent = item.farmer;
+      var farmerRating = getFarmerRatingSummary(item.farmerId);
+      document.getElementById('modalFarmerRating').innerHTML = farmerRating.ratingCount
+        ? renderStars(farmerRating.rating) + ' <span style="font-size:11px;color:var(--muted)">(' + farmerRating.ratingCount + ' verified reviews)</span>'
+        : '<span style="font-size:12px;color:var(--muted)">Not yet rated</span>';
+      renderRatingComments('modalFarmerReviews', getRatingComments('farmer', item.farmerId));
       document.getElementById('modalFarmerPhone').innerHTML = '<a href="tel:' + fPhone + '" style="color:var(--green);text-decoration:underline">' + fPhone + '</a>';
       document.getElementById('modalLoc').textContent = item.location;
       document.getElementById('modalDate').textContent = item.harvestDate;

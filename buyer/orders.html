@@ -39,6 +39,9 @@
     .page-btn.active{background:var(--green);color:#fff;border-color:var(--green);font-weight:700}
     .page-btn:disabled{opacity:.4;cursor:not-allowed}
     .page-size-select{padding:5px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-weight:600;background:#fff;color:var(--ink)}
+    .rating-choice{border:0;background:transparent;color:#cbd5e1;font-size:32px;line-height:1;cursor:pointer;padding:2px 5px}
+    .rating-choice.selected{color:#eaa023}
+    .rating-choice:focus-visible{outline:2px solid var(--green);border-radius:4px}
   </style>
 </head>
 <body>
@@ -122,6 +125,36 @@
     </div>
   </div>
 
+  <div class="modal-backdrop hidden" id="ratingModal">
+    <div class="modal-box" style="max-width:480px">
+      <div class="modal-head">
+        <div>
+          <h2>Rate Your Order</h2>
+          <small id="ratingOrderSub" style="color:var(--muted);font-size:12px"></small>
+        </div>
+        <button class="modal-close" data-close-modal aria-label="Close rating form">&times;</button>
+      </div>
+      <form class="modal-body" onsubmit="saveOrderRating(event)">
+        <div style="margin-bottom:20px">
+          <strong style="font-size:14px;display:block;margin-bottom:8px">Rate the product</strong>
+          <div id="productRatingChoices" role="group" aria-label="Rate the product"></div>
+          <label for="productRatingComment" style="display:block;font-size:12px;font-weight:600;margin:8px 0 5px">Product comment (optional)</label>
+          <textarea id="productRatingComment" maxlength="500" rows="3" placeholder="How was the quality of the product?" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;resize:vertical;font:inherit"></textarea>
+        </div>
+        <div style="margin-bottom:20px">
+          <strong style="font-size:14px;display:block;margin-bottom:8px">Rate the farmer</strong>
+          <div id="farmerRatingChoices" role="group" aria-label="Rate the farmer"></div>
+          <label for="farmerRatingComment" style="display:block;font-size:12px;font-weight:600;margin:8px 0 5px">Farmer comment (optional)</label>
+          <textarea id="farmerRatingComment" maxlength="500" rows="3" placeholder="How was your experience with this farmer?" style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;resize:vertical;font:inherit"></textarea>
+        </div>
+        <div class="modal-foot" style="padding:16px 0 0">
+          <button class="btn btn-secondary" type="button" data-close-modal>Maybe Later</button>
+          <button class="btn btn-primary" type="submit">Submit Rating</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <div id="toastEl" class="toast-notif"></div>
 
   <script>
@@ -130,6 +163,8 @@
     var _activeOrderId = null;
     var _currentPage = 1;
     var _pageSize = 10;
+    var _ratingOrderId = null;
+    var _ratingDraft = { product: 0, farmer: 0 };
 
     document.addEventListener('DOMContentLoaded', function(){
       _user = requireAuth(['Buyer']);
@@ -219,7 +254,9 @@
               (o.status === 'active' && o.currentStep >= 4 ?
                 '<button class="btn btn-primary btn-sm" onclick="confirmReceipt(\'' + o.id + '\')">&#10003; Confirm ' + (isPickup ? 'Handover' : 'Delivery Received') + '</button>' :
                 o.status === 'completed' ?
-                '<span style="font-size:12px;font-weight:700;color:var(--green)">&#10003; Order Complete</span>' :
+                (o.buyerRating ?
+                  '<span style="font-size:12px;font-weight:700;color:var(--green)">&#10003; Rated product ' + o.buyerRating.product + '/5 &bull; farmer ' + o.buyerRating.farmer + '/5</span>' :
+                  '<button class="btn btn-primary btn-sm" onclick="openRatingModal(\'' + o.id + '\')">&#9733; Rate Product &amp; Farmer</button>') :
                 o.status === 'cancelled' ? '<span style="font-size:12px;font-weight:700;color:#c0392b">Cancelled</span>' :
                 '<span style="font-size:12px;color:var(--muted)">Awaiting farmer</span>') +
             '</div></td>' +
@@ -304,6 +341,96 @@
 
       showToast('Order #' + orderId + ' confirmed as completed!');
       renderOrders();
+      openRatingModal(orderId);
+    }
+
+    function openRatingModal(orderId) {
+      var order = getOrders().find(function(item){ return item.id === orderId; });
+      if (!order || order.buyerId !== _user.id || (order.status !== 'completed' && order.currentStep !== 5) || order.buyerRating) return;
+
+      _ratingOrderId = orderId;
+      _ratingDraft = { product: 0, farmer: 0 };
+      document.getElementById('productRatingComment').value = '';
+      document.getElementById('farmerRatingComment').value = '';
+      document.getElementById('ratingOrderSub').textContent = 'Order #' + order.id + ' \u2022 ' + order.itemName + ' from ' + order.farmer;
+      renderRatingChoices('productRatingChoices', 'product');
+      renderRatingChoices('farmerRatingChoices', 'farmer');
+      openModal('ratingModal');
+    }
+
+    function renderRatingChoices(containerId, target) {
+      var container = document.getElementById(containerId);
+      container.innerHTML = [1, 2, 3, 4, 5].map(function(value){
+        return '<button class="rating-choice" type="button" data-rating="' + value + '" aria-label="' + value + ' out of 5 stars" aria-pressed="false" onclick="setRating(\'' + target + '\',' + value + ')">&#9733;</button>';
+      }).join('');
+    }
+
+    function setRating(target, value) {
+      if ((target !== 'product' && target !== 'farmer') || value < 1 || value > 5) return;
+      _ratingDraft[target] = value;
+      var containerId = target === 'product' ? 'productRatingChoices' : 'farmerRatingChoices';
+      document.querySelectorAll('#' + containerId + ' .rating-choice').forEach(function(button){
+        var selected = Number(button.getAttribute('data-rating')) <= value;
+        button.classList.toggle('selected', selected);
+        button.setAttribute('aria-pressed', Number(button.getAttribute('data-rating')) === value ? 'true' : 'false');
+      });
+    }
+
+    function saveOrderRating(event) {
+      event.preventDefault();
+      if (_ratingDraft.product < 1 || _ratingDraft.farmer < 1) {
+        showToast('Please rate both the product and the farmer.', 'error');
+        return;
+      }
+
+      var orders = getOrders();
+      var order = orders.find(function(item){ return item.id === _ratingOrderId; });
+      if (!order || order.buyerId !== _user.id || (order.status !== 'completed' && order.currentStep !== 5) || order.buyerRating) {
+        closeModal('ratingModal');
+        renderOrders();
+        showToast('This completed order can no longer be rated.', 'error');
+        return;
+      }
+
+      var listings = getListings();
+      var listing = listings.find(function(item){ return item.id === order.listingId; }) ||
+        listings.find(function(item){ return item.farmerId === order.farmerId && item.name === order.itemName; });
+      if (!listing) {
+        showToast('The product listing could not be found; rating was not saved.', 'error');
+        return;
+      }
+
+      var accounts = getAccounts();
+      var farmer = accounts.find(function(account){ return account.id === order.farmerId && account.role === 'Farmer'; });
+      if (!farmer) {
+        showToast('The farmer profile could not be found; rating was not saved.', 'error');
+        return;
+      }
+
+      var productAverage = updateRatingAverage(listing.rating, listing.ratingCount, _ratingDraft.product);
+      listing.rating = productAverage.rating;
+      listing.ratingCount = productAverage.ratingCount;
+
+      var farmerAverage = updateRatingAverage(farmer.rating, farmer.ratingCount, _ratingDraft.farmer);
+      farmer.rating = farmerAverage.rating;
+      farmer.ratingCount = farmerAverage.ratingCount;
+
+      order.buyerRating = {
+        product: _ratingDraft.product,
+        farmer: _ratingDraft.farmer,
+        productComment: document.getElementById('productRatingComment').value.trim(),
+        farmerComment: document.getElementById('farmerRatingComment').value.trim(),
+        listingId: listing.id,
+        farmerId: farmer.id,
+        ratedAt: new Date().toISOString()
+      };
+
+      saveListings(listings);
+      saveAccounts(accounts);
+      saveOrders(orders);
+      closeModal('ratingModal');
+      renderOrders();
+      showToast('Thank you! Your product and farmer ratings have been saved.');
     }
 
     // CHAT SYSTEM

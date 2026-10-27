@@ -12,6 +12,19 @@
     .acc-hero p{font-size:14px;opacity:.9}
     .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:24px}
     @media(max-width:850px){.grid-2{grid-template-columns:1fr}}
+    .review-table-panel{border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:18px;background:#fff}
+    .review-table-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:14px 16px;border-bottom:1px solid var(--border)}
+    .review-table-head h3{font-size:15px;margin:0}
+    .review-table-wrap{overflow-x:auto}
+    .review-table{min-width:620px}
+    .review-comment{white-space:pre-wrap;overflow-wrap:anywhere;max-width:460px}
+    .review-more{display:block;margin-top:5px;border:0;background:none;color:var(--green);font-size:11px;font-weight:700;padding:0;cursor:pointer}
+    .review-table-footer{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 16px;background:#fafaf8}
+    .review-pagination{display:flex;align-items:center;gap:6px}
+    .review-page-btn{border:1px solid var(--border);background:#fff;border-radius:6px;padding:5px 10px;font-size:12px;font-weight:600;color:var(--ink2);cursor:pointer}
+    .review-page-btn.active{background:var(--green);color:#fff;border-color:var(--green)}
+    .review-page-btn:disabled{opacity:.4;cursor:not-allowed}
+    .review-page-size{padding:5px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px;background:#fff}
   </style>
 </head>
 <body>
@@ -74,6 +87,51 @@
           <h2>Farmer &amp; Farmstead Profile</h2>
         </div>
         <div class="panel-body">
+          <div class="alert-banner alert-success" style="display:block;margin-bottom:18px">
+            <div id="farmerRatingSummary"></div>
+          </div>
+          <div class="review-table-panel">
+            <div class="review-table-head">
+              <h3>Farmer ratings &amp; comments</h3>
+              <label style="font-size:12px;color:var(--muted)">Show
+                <select id="farmerReviewPageSize" class="review-page-size" onchange="changeReviewPageSize('farmer', this.value)">
+                  <option value="5">5</option><option value="10" selected>10</option><option value="15">15</option><option value="20">20</option>
+                </select>
+                per page
+              </label>
+            </div>
+            <div class="review-table-wrap">
+              <table class="data-table review-table">
+                <thead><tr><th>Buyer</th><th>Farmer rating</th><th>Comment</th><th>Date</th></tr></thead>
+                <tbody id="farmerReviewRows"></tbody>
+              </table>
+            </div>
+            <div class="review-table-footer">
+              <div id="farmerReviewPageInfo" style="font-size:12px;color:var(--muted)"></div>
+              <div id="farmerReviewPagination" class="review-pagination"></div>
+            </div>
+          </div>
+          <div class="review-table-panel">
+            <div class="review-table-head">
+              <h3>Product ratings &amp; comments</h3>
+              <label style="font-size:12px;color:var(--muted)">Show
+                <select id="productReviewPageSize" class="review-page-size" onchange="changeReviewPageSize('product', this.value)">
+                  <option value="5">5</option><option value="10" selected>10</option><option value="15">15</option><option value="20">20</option>
+                </select>
+                per page
+              </label>
+            </div>
+            <div class="review-table-wrap">
+              <table class="data-table review-table">
+                <thead><tr><th>Product</th><th>Buyer</th><th>Product rating</th><th>Comment</th><th>Date</th></tr></thead>
+                <tbody id="productReviewRows"></tbody>
+              </table>
+            </div>
+            <div class="review-table-footer">
+              <div id="productReviewPageInfo" style="font-size:12px;color:var(--muted)"></div>
+              <div id="productReviewPagination" class="review-pagination"></div>
+            </div>
+          </div>
           <!-- AVATAR EDITOR -->
           <div class="avatar-section">
             <div class="avatar-current-wrap" onclick="document.getElementById('avatarFileInput').click()" title="Click to upload profile photo">
@@ -252,12 +310,23 @@
   <script>
     var _user;
     var _selectedAvatar = '';
+    var _reviewTables = {
+      farmer: { page: 1, pageSize: 10 },
+      product: { page: 1, pageSize: 10 }
+    };
 
     document.addEventListener('DOMContentLoaded', function(){
       _user = requireAuth(['Farmer']);
       if (!_user) return;
 
       document.getElementById('accTitle').textContent = _user.farmName || _user.name;
+      var rating = getFarmerRatingSummary(_user.id);
+      document.getElementById('farmerRatingSummary').innerHTML = '<strong>Buyer rating:</strong> ' +
+        (rating.ratingCount
+          ? renderStars(rating.rating) + ' <span style="font-size:12px;color:var(--muted)">(' + rating.ratingCount + ' verified ' + (rating.ratingCount === 1 ? 'review' : 'reviews') + ')</span>'
+          : '<span style="font-size:12px;color:var(--muted)">Not yet rated</span>');
+      renderReviewTable('farmer', getRatingComments('farmer', _user.id, null));
+      renderReviewTable('product', getFarmerProductRatingComments(_user.id, null));
       document.getElementById('profName').value = _user.name || '';
       document.getElementById('profFarm').value = _user.farmName || '';
       document.getElementById('profEmail').value = _user.email || '';
@@ -276,6 +345,128 @@
       updateAvatarPreview(_selectedAvatar);
       renderAvatarPresets();
     });
+
+    function renderReviewTable(type, reviews) {
+      var state = _reviewTables[type];
+      var rows = document.getElementById(type + 'ReviewRows');
+      var info = document.getElementById(type + 'ReviewPageInfo');
+      var pagination = document.getElementById(type + 'ReviewPagination');
+      if (!rows || !info || !pagination) return;
+
+      var totalPages = Math.max(1, Math.ceil(reviews.length / state.pageSize));
+      state.page = Math.min(state.page, totalPages);
+      var start = (state.page - 1) * state.pageSize;
+      var pageReviews = reviews.slice(start, start + state.pageSize);
+      rows.textContent = '';
+
+      if (!reviews.length) {
+        var emptyRow = document.createElement('tr');
+        var emptyCell = document.createElement('td');
+        emptyCell.colSpan = type === 'farmer' ? 4 : 5;
+        emptyCell.textContent = 'No reviews yet.';
+        emptyCell.style.color = 'var(--muted)';
+        emptyRow.appendChild(emptyCell);
+        rows.appendChild(emptyRow);
+      } else {
+        pageReviews.forEach(function(review){
+          var row = document.createElement('tr');
+          if (type === 'product') appendReviewCell(row, review.itemName || 'Product');
+          appendReviewCell(row, review.buyer || 'Verified buyer');
+          appendReviewCell(row, review.rating >= 1 && review.rating <= 5 ? review.rating.toFixed(1) + ' / 5' : 'Not rated');
+
+          var commentCell = document.createElement('td');
+          var comment = review.comment || 'No written comment provided.';
+          var commentText = document.createElement('span');
+          commentText.className = 'review-comment';
+          commentText.textContent = comment.length > 160 ? comment.slice(0, 160) + '…' : comment;
+          commentCell.appendChild(commentText);
+          if (comment.length > 160) {
+            var moreButton = document.createElement('button');
+            moreButton.type = 'button';
+            moreButton.className = 'review-more';
+            moreButton.textContent = 'Show more';
+            moreButton.setAttribute('aria-expanded', 'false');
+            moreButton.addEventListener('click', function(){
+              var expanded = moreButton.getAttribute('aria-expanded') === 'true';
+              commentText.textContent = expanded ? comment.slice(0, 160) + '…' : comment;
+              moreButton.textContent = expanded ? 'Show more' : 'Show less';
+              moreButton.setAttribute('aria-expanded', expanded ? 'false' : 'true');
+            });
+            commentCell.appendChild(moreButton);
+          }
+          row.appendChild(commentCell);
+          appendReviewCell(row, review.date || '—');
+          rows.appendChild(row);
+        });
+      }
+
+      info.textContent = reviews.length
+        ? 'Showing ' + (start + 1) + ' to ' + Math.min(start + state.pageSize, reviews.length) + ' of ' + reviews.length + ' reviews (Page ' + state.page + ' of ' + totalPages + ')'
+        : 'Showing 0 reviews';
+      renderReviewPagination(type, totalPages);
+    }
+
+    function appendReviewCell(row, value) {
+      var cell = document.createElement('td');
+      cell.textContent = value;
+      row.appendChild(cell);
+    }
+
+    function renderReviewPagination(type, totalPages) {
+      var state = _reviewTables[type];
+      var container = document.getElementById(type + 'ReviewPagination');
+      var previous = document.createElement('button');
+      previous.type = 'button';
+      previous.className = 'review-page-btn';
+      previous.textContent = 'Prev';
+      previous.disabled = state.page === 1;
+      previous.addEventListener('click', function(){ goToReviewPage(type, state.page - 1); });
+      container.textContent = '';
+      container.appendChild(previous);
+
+      for (var page = 1; page <= totalPages; page++) {
+        if (totalPages <= 7 || page === 1 || page === totalPages || (page >= state.page - 1 && page <= state.page + 1)) {
+          var button = document.createElement('button');
+          button.type = 'button';
+          button.className = 'review-page-btn' + (page === state.page ? ' active' : '');
+          button.textContent = String(page);
+          button.setAttribute('aria-current', page === state.page ? 'page' : 'false');
+          button.addEventListener('click', (function(targetPage){
+            return function(){ goToReviewPage(type, targetPage); };
+          })(page));
+          container.appendChild(button);
+        } else if (page === state.page - 2 || page === state.page + 2) {
+          var ellipsis = document.createElement('span');
+          ellipsis.textContent = '…';
+          ellipsis.style.padding = '0 4px';
+          ellipsis.style.color = 'var(--muted)';
+          container.appendChild(ellipsis);
+        }
+      }
+
+      var next = document.createElement('button');
+      next.type = 'button';
+      next.className = 'review-page-btn';
+      next.textContent = 'Next';
+      next.disabled = state.page === totalPages;
+      next.addEventListener('click', function(){ goToReviewPage(type, state.page + 1); });
+      container.appendChild(next);
+    }
+
+    function goToReviewPage(type, page) {
+      _reviewTables[type].page = page;
+      renderReviewTable(type, type === 'farmer'
+        ? getRatingComments('farmer', _user.id, null)
+        : getFarmerProductRatingComments(_user.id, null));
+    }
+
+    function changeReviewPageSize(type, size) {
+      _reviewTables[type].pageSize = parseInt(size, 10) || 10;
+      _reviewTables[type].page = 1;
+      renderReviewTable(type, type === 'farmer'
+        ? getRatingComments('farmer', _user.id, null)
+        : getFarmerProductRatingComments(_user.id, null));
+    }
 
     function updateAddressPreview() {
       var purok = (document.getElementById('profPurok').value || '').trim();

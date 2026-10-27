@@ -261,6 +261,90 @@ function renderStars(r) {
   return s + '<span class="rating-val">' + r.toFixed(1) + '</span></span>';
 }
 
+function getFarmerRatingSummary(farmerId) {
+  var farmer = getAccounts().find(function(account){ return account.id === farmerId && account.role === 'Farmer'; });
+  var rating = Number(farmer && farmer.rating);
+  var ratingCount = Number(farmer && farmer.ratingCount);
+  return {
+    rating: !isNaN(rating) && rating > 0 ? rating : 0,
+    ratingCount: !isNaN(ratingCount) && ratingCount > 0 ? ratingCount : 0
+  };
+}
+
+function updateRatingAverage(currentRating, currentCount, newRating) {
+  var rating = Number(currentRating);
+  var count = Number(currentCount);
+  var average = !isNaN(rating) && rating > 0 ? rating : 0;
+  var totalRatings = !isNaN(count) && count > 0 ? count : 0;
+  return {
+    rating: (average * totalRatings + newRating) / (totalRatings + 1),
+    ratingCount: totalRatings + 1
+  };
+}
+
+function getRatingComments(targetType, targetId, limit) {
+  var reviews = getOrders().filter(function(order){
+    if (!order.buyerRating) return false;
+    if (targetType === 'product') return String(order.buyerRating.listingId || order.listingId) === String(targetId);
+    if (targetType === 'farmer') return String(order.buyerRating.farmerId || order.farmerId) === String(targetId);
+    return false;
+  }).map(function(order){
+    var comment = targetType === 'product' ? order.buyerRating.productComment : order.buyerRating.farmerComment;
+    return {
+      comment: typeof comment === 'string' && comment.trim() ? comment.trim() : 'No written comment provided.',
+      buyer: order.buyer || 'Verified buyer',
+      rating: Number(targetType === 'product' ? order.buyerRating.product : order.buyerRating.farmer),
+      itemName: order.itemName || '',
+      date: order.buyerRating.ratedAt ? new Date(order.buyerRating.ratedAt).toLocaleDateString('en-PH') : ''
+    };
+  }).reverse();
+  return limit === null ? reviews : reviews.slice(0, limit || 5);
+}
+
+function getFarmerProductRatingComments(farmerId, limit) {
+  var reviews = getOrders().filter(function(order){
+    return order.buyerRating && String(order.buyerRating.farmerId || order.farmerId) === String(farmerId);
+  }).map(function(order){
+    var comment = order.buyerRating.productComment;
+    return {
+      comment: typeof comment === 'string' && comment.trim() ? comment.trim() : 'No written comment provided.',
+      buyer: order.buyer || 'Verified buyer',
+      rating: Number(order.buyerRating.product),
+      itemName: order.itemName || 'Product',
+      date: order.buyerRating.ratedAt ? new Date(order.buyerRating.ratedAt).toLocaleDateString('en-PH') : ''
+    };
+  }).reverse();
+  return limit === null ? reviews : reviews.slice(0, limit || 10);
+}
+
+function renderRatingComments(containerId, comments) {
+  var container = document.getElementById(containerId);
+  if (!container) return;
+  container.textContent = '';
+  if (!comments.length) {
+    var empty = document.createElement('p');
+    empty.style.cssText = 'font-size:12px;color:var(--muted);margin:8px 0';
+    empty.textContent = 'No written reviews yet.';
+    container.appendChild(empty);
+    return;
+  }
+  comments.forEach(function(review){
+    var entry = document.createElement('div');
+    entry.style.cssText = 'padding:9px 0;border-top:1px solid var(--border)';
+    var meta = document.createElement('small');
+    meta.style.cssText = 'display:block;color:var(--muted);font-size:11px;margin-bottom:3px';
+    meta.textContent = (review.itemName ? review.itemName + ' · ' : '') +
+      review.buyer + (review.date ? ' · ' + review.date : '') +
+      (review.rating >= 1 && review.rating <= 5 ? ' · ' + review.rating + '/5' : '');
+    var text = document.createElement('p');
+    text.style.cssText = 'font-size:13px;color:var(--ink2);margin:0;white-space:pre-wrap;overflow-wrap:anywhere';
+    text.textContent = review.comment;
+    entry.appendChild(meta);
+    entry.appendChild(text);
+    container.appendChild(entry);
+  });
+}
+
 function getFulfillmentBadge(m) {
   if (m === 'Pick-up') return '<span class="badge badge-pickup">Pick-up Only</span>';
   if (m === 'Delivery') return '<span class="badge badge-delivery">Delivery</span>';
